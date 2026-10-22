@@ -340,9 +340,22 @@ const TOOLKIT_STEPS = [
   { title: 'Day 7 — Check retention', kicker: 'Make it stick', body: 'After seven days, test yourself again without looking. Mark the topic complete only after you have reviewed mistakes.', example: 'Example: answer three short questions about photosynthesis and explain the process aloud.', day: '7', label: 'RETAIN', icon: CheckCircle2 },
 ]
 
+
+const APP_TOUR_STEPS = [
+  { title: 'Start at Overview', kicker: 'YOUR HOME SCREEN', body: 'Overview is your starting point. It summarizes study activity, active topics, progress, and revision sessions that are due or overdue. Use Add a topic to begin building your plan.', example: 'First action: choose Add a topic. If you have not created a subject yet, create one first from the + control beside Your subjects.', label: 'OVERVIEW', icon: LayoutDashboard },
+  { title: 'Create a subject', kicker: 'ORGANIZE YOUR MATERIAL', body: 'Subjects are broad categories such as Biology, History, Mathematics, or JavaScript. The subject list appears in the sidebar. Select a subject to filter your topics.', example: 'Example: create Biology, then use it when adding Photosynthesis and Cell Structure as topics.', label: 'SUBJECTS', icon: BookOpen },
+  { title: 'Add your first topic', kicker: 'BUILD A STUDY PLAN', body: 'Choose Add topic, enter a clear topic name, select a subject, and set the date you first studied it. Subtopics are optional; priority and estimated revision time help you plan. The revision days field defaults to 1, 4, 7 and accepts custom comma-separated day offsets.', example: 'Example: topic = Photosynthesis; subject = Biology; initial study date = today; revision days = 1, 4, 7. Check the timeline preview, then select Save topic & schedule.', label: 'ADD TOPIC', icon: Plus },
+  { title: 'Follow the revision queue', kicker: 'TURN A PLAN INTO ACTION', body: 'Open Today’s revision to see scheduled sessions. Choose a topic, recall what you know before opening notes, then check the material and correct gaps. Use the check action to mark a session completed or skip it when appropriate.', example: 'A completed session updates the record. Skipping is a status choice, not proof that you learned the topic—return to weak material when needed.', label: 'REVISE', icon: ListTodo },
+  { title: 'Use the Calendar', kicker: 'SEE WHAT IS COMING', body: 'The Calendar view gives you a date-based overview of topic revision sessions. Use it to understand how your plan is distributed and to spot busy days.', example: 'If several revisions land on one day, split them into shorter sessions and adjust future topic offsets when creating new topics.', label: 'CALENDAR', icon: CalendarDays },
+  { title: 'Learn with the Study Toolkit', kicker: 'GET HELP WHEN YOU NEED IT', body: 'The Study toolkit explains the 1–4–7 method with visuals and a worked example. Select I understood to unlock the guided method tutorial, then use Next step to move through the four revision stages.', example: 'The project walkthrough explains the app; the separate 1–4–7 tutorial teaches the revision method. You can revisit either whenever you need.', label: 'TOOLKIT', icon: CircleHelp },
+  { title: 'Understand Settings and saved data', kicker: 'KNOW YOUR WORKSPACE', body: 'Settings summarizes the number of subjects and topics and explains the configured API/database setup. Revision dates are stored, but browser push/email reminders are not enabled in this version.', example: 'Important for hosted demos: the current README describes Render Free + SQLite as temporary storage. Records may be lost after restarts, spin-downs or redeploys. Use sample data until a persistent database is configured.', label: 'SETTINGS', icon: Settings2 },
+]
+
 function ToolkitView() {
   const [understood, setUnderstood] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [projectTourOpen, setProjectTourOpen] = useState(false)
+  const [projectTourStep, setProjectTourStep] = useState(0)
   const [step, setStep] = useState(0)
   const current = TOOLKIT_STEPS[step]
   const StepIcon = current.icon
@@ -351,6 +364,12 @@ function ToolkitView() {
   return <div className="page-stack toolkit-page">
     <section className="welcome-row animate-in">
       <div><div className="eyebrow"><Sparkles size={13}/> YOUR FRIENDLY LEARNING GUIDE</div><h1>Study toolkit<span className="period">.</span></h1><p>A visual, step-by-step guide to using the 1–4–7 revision method in Mission147.</p></div>
+    </section>
+
+    <section className="project-tour-panel panel animate-in">
+      <div className="project-tour-heading"><div className="project-tour-icon"><CircleHelp size={21}/></div><div><span className="toolkit-label">NEW HERE? START HERE</span><h2>Complete Mission147 walkthrough</h2><p>Learn what each screen does, how to create a study plan, and how to follow your revisions from start to finish.</p></div></div>
+      <div className="project-flow" aria-label="Mission147 workflow"><div><span>01</span><b>Subject</b><small>Organize</small></div><i>→</i><div><span>02</span><b>Topic</b><small>Add details</small></div><i>→</i><div><span>03</span><b>Revise</b><small>Recall</small></div><i>→</i><div><span>04</span><b>Track</b><small>Calendar</small></div></div>
+      <div className="project-tour-bottom"><p><strong>7 short steps</strong><span>Plain-language explanations, examples, and practical actions for every main screen.</span></p><button className="primary-button" onClick={() => { setProjectTourStep(0); setProjectTourOpen(true) }}><BookOpen size={16}/> Start project tutorial <ArrowRight size={15}/></button></div>
     </section>
     <section className="toolkit-intro panel animate-in">
       <div className="toolkit-intro-copy"><span className="toolkit-label">THE IDEA IN ONE SENTENCE</span><h2>Learn once. Recall on a schedule. Remember for longer.</h2><p>Studying again and again in one sitting can feel familiar, but spaced revision asks your brain to retrieve the information after a gap. Use these dates as a practical guide—not a guarantee or a rigid rule.</p></div>
@@ -380,6 +399,14 @@ function ToolkitView() {
       <button className={`understood-button ${understood ? 'is-understood' : ''}`} onClick={() => { setUnderstood(true); setTutorialOpen(false); setStep(0) }}><Check size={16}/>{understood ? 'I understand ✓' : 'I understood'}</button>
     </section>
     {understood && <section className="toolkit-unlocked animate-in"><div><span className="toolkit-label">READY FOR A GUIDED EXPLANATION?</span><h3>Let’s walk through a real example together.</h3><p>Open the interactive tutorial to move through each day, see what to do, and check the example.</p></div><button className="primary-button" onClick={() => { setStep(0); setTutorialOpen(true) }}><BookOpen size={16}/> Start the tutorial <ArrowRight size={16}/></button></section>}
+
+    {projectTourOpen && <div className="tutorial-backdrop" role="dialog" aria-modal="true" aria-labelledby="project-tour-title">
+      <section className="tutorial-modal project-tour-modal">
+        <div className="tutorial-topline"><span className="toolkit-label">MISSION147 APP TOUR · STEP {projectTourStep + 1} OF {APP_TOUR_STEPS.length}</span><button className="icon-button" onClick={() => setProjectTourOpen(false)} aria-label="Close project tutorial"><X size={18}/></button></div>
+        {(() => { const tour = APP_TOUR_STEPS[projectTourStep]; const TourIcon = tour.icon; return <><div className={'tutorial-hero project-tour-hero project-tour-hero-' + projectTourStep}><div className="tutorial-day-bubble">0{projectTourStep + 1}</div><TourIcon size={32}/><div className="tutorial-progress">{APP_TOUR_STEPS.map((s,i)=><span key={s.label} className={i <= projectTourStep ? 'progress-active' : ''}/>)}</div></div><span className="toolkit-step-kicker">{tour.kicker}</span><h2 id="project-tour-title">{tour.title}</h2><p className="tutorial-body">{tour.body}</p><div className="tutorial-example-box"><strong>What to do</strong><p>{tour.example}</p><span>Tip: use the main navigation to open the screen described here. You can reopen this walkthrough at any time from Study toolkit.</span></div></>})()}
+        <div className="tutorial-actions"><button className="secondary-button" disabled={projectTourStep === 0} onClick={() => setProjectTourStep(v => Math.max(0, v - 1))}>Previous</button>{projectTourStep < APP_TOUR_STEPS.length - 1 ? <button className="primary-button" onClick={() => setProjectTourStep(v => Math.min(APP_TOUR_STEPS.length - 1, v + 1))}>Next step <ArrowRight size={15}/></button> : <button className="primary-button" onClick={() => setProjectTourOpen(false)}><Check size={15}/> Finish walkthrough</button>}</div>
+      </section>
+    </div>}
     {tutorialOpen && <div className="tutorial-backdrop" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
       <section className="tutorial-modal">
         <div className="tutorial-topline"><span className="toolkit-label">GUIDED TUTORIAL · STEP {step + 1} OF {TOOLKIT_STEPS.length}</span><button className="icon-button" onClick={() => setTutorialOpen(false)} aria-label="Close tutorial"><X size={18}/></button></div>
