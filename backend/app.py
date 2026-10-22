@@ -146,6 +146,86 @@ def create_app(test_config: dict | None = None) -> Flask:
         result["generated_revisions"] = schedule
         return jsonify(result), 201
 
+    @app.patch("/api/topics/<int:topic_id>")
+    def update_topic(topic_id: int):
+        payload = request.get_json(silent=True) or {}
+        allowed = {"title", "subject_id", "original_study_date", "priority", "difficulty", "estimated_minutes", "revision_offsets", "subtopics"}
+        if not payload or set(payload) - allowed: return error("Provide one or more supported topic fields")
+        updates = {}
+        if "title" in payload:
+            title = str(payload["title"]).strip()
+            if not title or len(title) > 240: return error("Topic title is required and must be 240 characters or fewer")
+            updates["title"] = title
+        if "subject_id" in payload:
+            try: subject_id = int(payload["subject_id"])
+            except (ValueError, TypeError): return error("subject_id must be a valid subject")
+            with db() as connection:
+                if connection.execute("SELECT 1 FROM subjects WHERE id=? AND archived_at IS NULL", (subject_id,)).fetchone() is None: return error("Subject not found", 404)
+            updates["subject_id"] = subject_id
+        if "original_study_date" in payload:
+            try: updates["original_study_date"] = parse_date(payload["original_study_date"]).isoformat()
+            except (ValueError, TypeError): return error("original_study_date must use YYYY-MM-DD")
+        if "priority" in payload:
+            priority = str(payload["priority"]).lower()
+            if priority not in {"low", "medium", "high"}: return error("Priority must be low, medium, or high")
+            updates["priority"] = priority
+        if "difficulty" in payload:
+            try: difficulty = int(payload["difficulty"])
+            except (ValueError, TypeError): return error("difficulty must be between 1 and 5")
+            if not 1 <= difficulty <= 5: return error("difficulty must be between 1 and 5")
+            updates["difficulty"] = difficulty
+        if "estimated_minutes" in payload:
+            try: estimated = int(payload["estimated_minutes"])
+            except (ValueError, TypeError): return error("estimated_minutes must be between 1 and 1440")
+            if not 1 <= estimated <= 1440: return error("estimated_minutes must be between 1 and 1440")
+            updates["estimated_minutes"] = estimated
+        offsets = None
+        if "revision_offsets" in payload:
+            try: offsets = normalize_offsets(payload["revision_offsets"])
+            except (ValueError, TypeError): return error("Provide valid positive revision intervals")
+            updates["revision_offsets_json"] = json.dumps(offsets)
+        subtopics = payload.get("subtopics")
+        if subtopics is not None and (not isinstance(subtopics, list) or any(not isinstance(item, str) or not item.strip() for item in subtopics)): return error("Subtopics must be a list of non-empty strings")
+        if not updates and subtopics is None: return error("No valid fields provided")
+        try:
+            with db() as connection:
+                existing = connection.execute("SELECT * FROM topics WHERE id=? AND archived_at IS NULL", (topic_id,)).fetchone()
+                if existing is None: return error("Topic not found", 404)
+                if updates:
+                    assignments = ", ".join(f"{key}=?" for key in updates)
+                    connection.execute(f"UPDATE topics SET {assignments}, updated_at=CURRENT_TIMESTAMP WHERE id=?", (*updates.values(), topic_id))
+                if subtopics is not None:
+                    old = {row["title"]: row for row in connection.execute("SELECT * FROM subtopics WHERE topic_id=?", (topic_id,)).fetchall()}
+                    connection.execute("DELETE FROM subtopics WHERE topic_id=?", (topic_id,))
+                    for index, item in enumerate(subtopics):
+                        prior = old.get(item.strip())
+                        connection.execute("INSERT INTO subtopics(topic_id,title,sort_order,completed_at,notes,description) VALUES(?,?,?,?,?,?)",
+                            (topic_id, item.strip()[:240], index, prior["completed_at"] if prior else None, prior["notes"] if prior else "", prior["description"] if prior else ""))
+                if offsets is not None or "original_study_date" in updates:
+                    current = connection.execute("SELECT original_study_date FROM topics WHERE id=?", (topic_id,)).fetchone()
+                    active_offsets = offsets if offsets is not None else json.loads(existing["revision_offsets_json"])
+                    schedule = build_schedule(parse_date(current["original_study_date"]), active_offsets)
+                    connection.execute("DELETE FROM revision_sessions WHERE topic_id=? AND status!='completed'", (topic_id,))
+                    completed_stages = {row["stage"] for row in connection.execute("SELECT stage FROM revision_sessions WHERE topic_id=?", (topic_id,)).fetchall()}
+                    for session in schedule:
+                        if session["stage"] in completed_stages: continue
+                        connection.execute("INSERT INTO revision_sessions(topic_id,stage,offset_days,scheduled_date,status) VALUES(?,?,?,?,?)",
+                            (topic_id, session["stage"], session["offset_days"], session["scheduled_date"], "scheduled"))
+                return jsonify({"id": topic_id, "updated": True})
+        except sqlite3.IntegrityError as exc:
+            return error(f"Could not update topic: {exc}", 409)
+
+    @app.delete("/api/topics/<int:topic_id>")
+    def delete_topic(topic_id: int):
+        try:
+            with db() as connection:
+                existing = connection.execute("SELECT id FROM topics WHERE id=? AND archived_at IS NULL", (topic_id,)).fetchone()
+                if existing is None: return error("Topic not found", 404)
+                connection.execute("DELETE FROM topics WHERE id=?", (topic_id,))
+            return jsonify({"id": topic_id, "deleted": True})
+        except sqlite3.IntegrityError as exc:
+            return error(f"Could not delete topic: {exc}", 409)
+
     @app.patch("/api/revisions/<int:revision_id>")
     def update_revision(revision_id: int):
         payload = request.get_json(silent=True) or {}
