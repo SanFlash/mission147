@@ -28,8 +28,10 @@ const todayISO = () => {
 const prettyDate = (date: string) => new Date(date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 const prettyLongDate = (date: Date) => date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\\/$/, '')
+
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
   })
@@ -174,7 +176,7 @@ export default function App() {
         {subjects.length === 0 && <p className="sidebar-empty">Your subjects will appear here.</p>}
       </div>
       <div className="sidebar-bottom">
-        <div className="privacy-card"><ShieldCheck size={17}/><div><strong>Private by default</strong><span>Your study data stays local.</span></div></div>
+        <div className="privacy-card"><ShieldCheck size={17}/><div><strong>Private by default</strong><span>Your study data stays in your configured database.</span></div></div>
         <div className="profile-row"><div className="avatar">M</div><div className="profile-copy"><strong>My learning space</strong><span>Personal workspace</span></div><ChevronDown size={15} className="muted"/></div>
       </div>
     </aside>
@@ -205,7 +207,7 @@ export default function App() {
           {view === 'Settings' && <SettingsView subjects={subjects.length} topics={topics.length} />}
         </>}
       </div>
-      <footer className="footer"><span>MISSION147 <span className="footer-dot">•</span> REVISION OS</span><span><ShieldCheck size={13}/> Local-first learning · Your data stays on this device</span></footer>
+      <footer className="footer"><span>MISSION147 <span className="footer-dot">•</span> REVISION OS</span><span><ShieldCheck size={13}/> Your learning data stays in your configured database</span></footer>
     </main>
 
     {showTopicForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setShowTopicForm(false) }}>
@@ -318,7 +320,7 @@ function CalendarView({topics}: {topics:Topic[]}) {
 
 function SettingsView({subjects,topics}: {subjects:number;topics:number}) {
   return <div className="page-stack"><section className="welcome-row animate-in"><div><div className="eyebrow">YOUR WORKSPACE</div><h1>Settings<span className="period">.</span></h1><p>Know where your data lives and how Mission147 works.</p></div></section>
-    <div className="settings-grid animate-in"><div className="panel settings-panel"><div className="settings-icon"><ShieldCheck size={20}/></div><h3>Local-first privacy</h3><p>Mission147 uses a local SQLite database. Your study topics are not sent to a cloud service by this app.</p><div className="settings-status"><span className="green-dot"/> Local API connected when dashboard data loads</div></div><div className="panel settings-panel"><div className="settings-icon"><DatabaseIcon/></div><h3>Your learning data</h3><p>Current records in this workspace.</p><div className="settings-data"><span>Subjects<strong>{subjects}</strong></span><span>Topics<strong>{topics}</strong></span></div></div><div className="panel settings-panel"><div className="settings-icon"><AlarmClock size={20}/></div><h3>Reminder capability</h3><p>Revision dates are stored automatically. Browser and background notification delivery is not enabled in this phase.</p><span className="feature-status">Planned feature</span></div><div className="panel settings-panel"><div className="settings-icon"><Sparkles size={20}/></div><h3>1–4–7 method</h3><p>Default intervals are calculated from the original study date. Custom offsets can be set when creating a topic.</p><div className="plan-pills large"><span>1</span><span>4</span><span>7</span><span>14</span><span>30</span></div></div></div>
+    <div className="settings-grid animate-in"><div className="panel settings-panel"><div className="settings-icon"><ShieldCheck size={20}/></div><h3>Deployment-aware storage</h3><p>Local development uses SQLite on your computer. A hosted deployment sends requests to your configured API and stores records in that backend's database.</p><div className="settings-status"><span className="green-dot"/> API connection is checked when dashboard data loads</div></div><div className="panel settings-panel"><div className="settings-icon"><DatabaseIcon/></div><h3>Your learning data</h3><p>Current records in this workspace.</p><div className="settings-data"><span>Subjects<strong>{subjects}</strong></span><span>Topics<strong>{topics}</strong></span></div></div><div className="panel settings-panel"><div className="settings-icon"><AlarmClock size={20}/></div><h3>Reminder capability</h3><p>Revision dates are stored automatically. Browser and background notification delivery is not enabled in this phase.</p><span className="feature-status">Planned feature</span></div><div className="panel settings-panel"><div className="settings-icon"><Sparkles size={20}/></div><h3>1–4–7 method</h3><p>Default intervals are calculated from the original study date. Custom offsets can be set when creating a topic.</p><div className="plan-pills large"><span>1</span><span>4</span><span>7</span><span>14</span><span>30</span></div></div></div>
   </div>
 }
 
