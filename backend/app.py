@@ -25,7 +25,7 @@ def create_app(test_config: dict | None = None) -> Flask:
     # Allow the configured origins plus this project's Vercel production/preview URLs.
     # A browser reports a CORS rejection as a generic fetch TypeError, which can look
     # like an API outage on the first visit.
-    vercel_project_origin = r"https://mission147(?:-[a-z0-9-]+)?\\.vercel\\.app"
+    vercel_project_origin = r"https://mission147(?:-[a-z0-9-]+)?\.vercel\.app"
     CORS(app, resources={r"/api/*": {"origins": [*allowed_origins, vercel_project_origin]}})
     if test_config:
         app.config.update(test_config)
