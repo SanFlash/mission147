@@ -6,9 +6,11 @@ The development server binds to loopback only by default.
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from datetime import date
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 from backend.database import connect, init_db
 from backend.scheduler import DEFAULT_OFFSETS, build_schedule, normalize_offsets, parse_date
@@ -17,6 +19,10 @@ from backend.scheduler import DEFAULT_OFFSETS, build_schedule, normalize_offsets
 def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.config.update(JSON_SORT_KEYS=False)
+    allowed_origins = [origin.strip() for origin in os.environ.get(
+        "MISSION147_CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",") if origin.strip()]
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
     if test_config:
         app.config.update(test_config)
     db_path = app.config.get("DATABASE_PATH")
@@ -217,6 +223,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     return app
 
 
+app = create_app()
+
+
 if __name__ == "__main__":
-    application = create_app()
-    application.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=True)
