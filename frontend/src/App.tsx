@@ -30,16 +30,47 @@ const todayISO = () => {
 const prettyDate = (date: string) => new Date(date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 const prettyLongDate = (date: Date) => date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (typeof window !== 'undefined' && !['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'https://mission147.onrender.com'
+    : '')
+).replace(/\/$/, '')
+
+const wait = (ms: number) => new Promise(resolve => window.setTimeout(resolve, ms))
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-  })
-  const body = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`)
-  return body as T
+  let lastError: unknown
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const controller = new AbortController()
+    const timeout = window.setTimeout(() => controller.abort(), 25000)
+    try {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        ...options, signal: controller.signal, cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        const error = new Error(body.error || `Request failed (${response.status})`)
+        if (response.status < 500 && response.status !== 429) throw error
+        throw error
+      }
+      return body as T
+    } catch (error) {
+      lastError = error
+      const retryable = error instanceof TypeError ||
+        (error instanceof DOMException && error.name === 'AbortError') ||
+        (error instanceof Error && /Request failed \((5\d\d|429)\)/.test(error.message))
+      if (!retryable || attempt === 2) break
+      // Render Free can sleep between requests; allow time for the API to wake up.
+      await wait(900 * (attempt + 1))
+    } finally { window.clearTimeout(timeout) }
+  }
+  if (lastError instanceof DOMException && lastError.name === 'AbortError')
+    throw new Error('The study API is taking too long to wake up. Please retry in a moment.')
+  if (lastError instanceof TypeError)
+    throw new Error('Cannot reach the study API right now. Check your connection and retry; the hosted service may be waking up.')
+  throw lastError instanceof Error ? lastError : new Error('Could not reach Mission147. Please retry.')
 }
 
 export default function App() {
@@ -63,6 +94,12 @@ export default function App() {
   const [duration, setDuration] = useState('30')
   const [offsetsText, setOffsetsText] = useState('1, 4, 7')
   const [filterSubject, setFilterSubject] = useState('all')
+  const [remindersEnabled, setRemindersEnabled] = useState(() => {
+    try { return window.localStorage.getItem('mission147-reminders-enabled') === 'true' } catch { return false }
+  })
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof Notification === 'undefined' ? 'denied' : Notification.permission,
+  )
   const rootRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
@@ -81,11 +118,63 @@ export default function App() {
   }, [])
 
   useEffect(() => { void load() }, [load])
+
+  const enableReminders = useCallback(async () => {
+    if (!('Notification' in window)) {
+      setNotice('This browser does not support desktop notifications. Keep Mission147 open to use in-app reminders.')
+      return
+    }
+    try {
+      const permission = await Notification.requestPermission()
+      setNotificationPermission(permission)
+      if (permission === 'granted') {
+        setRemindersEnabled(true)
+        window.localStorage.setItem('mission147-reminders-enabled', 'true')
+        setNotice('Browser reminders enabled. Keep Mission147 open for scheduled reminder checks.')
+      } else setNotice('Notifications were not allowed. You can enable them in your browser site settings.')
+    } catch { setNotice('Could not request notification permission. Check your browser site settings.') }
+  }, [])
+
+  const disableReminders = useCallback(() => {
+    setRemindersEnabled(false)
+    try { window.localStorage.setItem('mission147-reminders-enabled', 'false') } catch { /* storage may be blocked */ }
+    setNotice('Browser reminders paused.')
+  }, [])
+
+  useEffect(() => {
+    if (!remindersEnabled || notificationPermission !== 'granted' || !('Notification' in window)) return
+    const checkForReminders = () => {
+      const now = Date.now()
+      const lastSent = Number(window.localStorage.getItem('mission147-last-reminder-at') || 0)
+      if (now - lastSent < 60 * 60 * 1000) return
+      const pending = revisions.filter(r => (r.status === 'scheduled' || r.status === 'snoozed') && r.scheduled_date <= todayISO())
+      if (!pending.length) return
+      const overdueCount = pending.filter(r => r.scheduled_date < todayISO()).length
+      const todayCount = pending.length - overdueCount
+      const detail = [overdueCount ? `${overdueCount} overdue` : '', todayCount ? `${todayCount} due today` : ''].filter(Boolean).join(' · ')
+      try {
+        new Notification('Mission147 revision reminder', {
+          body: `${detail}: time for active recall. Open Mission147 to review your queue.`,
+          tag: 'mission147-revision-reminder',
+        })
+        window.localStorage.setItem('mission147-last-reminder-at', String(now))
+      } catch { /* browser may suppress notifications */ }
+    }
+    checkForReminders()
+    const timer = window.setInterval(checkForReminders, 60 * 1000)
+    return () => window.clearInterval(timer)
+  }, [remindersEnabled, notificationPermission, revisions])
   useEffect(() => {
     if (!rootRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const ctx = gsap.context(() => {
       gsap.fromTo('.animate-in', { y: 12, opacity: 0 }, {
         y: 0, opacity: 1, duration: 0.48, stagger: 0.055, ease: 'power2.out', clearProps: 'all',
+      })
+      gsap.fromTo('.hero-card', { transformPerspective: 900, rotationX: 3, rotationY: -4, z: -18, scale: 0.985 }, {
+        rotationX: 0, rotationY: 0, z: 0, scale: 1, duration: 0.9, ease: 'power3.out', clearProps: 'transform',
+      })
+      gsap.fromTo('.stat-card', { rotationX: 5, z: -12, transformPerspective: 800 }, {
+        rotationX: 0, z: 0, duration: 0.65, stagger: 0.07, ease: 'power2.out', clearProps: 'transform',
       })
     }, rootRef)
     return () => ctx.revert()
@@ -194,7 +283,7 @@ export default function App() {
       </header>
 
       <div className="content">
-        {error && <div className="alert error-alert"><CircleHelp size={17}/><span>{error}</span><button onClick={() => setError('')} aria-label="Dismiss error"><X size={16}/></button></div>}
+        {error && <div className="alert error-alert"><CircleHelp size={17}/><span>{error}</span><button className="retry-action" onClick={() => { setLoading(true); void load() }}>Retry now</button><button onClick={() => setError('')} aria-label="Dismiss error"><X size={16}/></button></div>}
         {notice && <div className="alert success-alert"><CheckCircle2 size={17}/><span>{notice}</span><button onClick={() => setNotice('')} aria-label="Dismiss notice"><X size={16}/></button></div>}
         {loading ? <div className="loading-panel"><div className="spinner"/><p>Preparing your learning space…</p></div> : <>
           {view === 'Overview' && <Overview
@@ -207,7 +296,7 @@ export default function App() {
           {view === "Today's revision" && <RevisionView revisions={revisions} onComplete={updateRevision} />}
           {view === 'Calendar' && <CalendarView topics={topics} />}
           {view === 'Study toolkit' && <ToolkitView />}
-          {view === 'Settings' && <SettingsView subjects={subjects.length} topics={topics.length} />}
+          {view === 'Settings' && <SettingsView subjects={subjects.length} topics={topics.length} remindersEnabled={remindersEnabled} notificationPermission={notificationPermission} onEnableReminders={enableReminders} onDisableReminders={disableReminders} />}
         </>}
       </div>
       <footer className="footer"><span>MISSION147 <span className="footer-dot">•</span> REVISION OS</span><span><ShieldCheck size={13}/> Your learning data stays in your configured database</span></footer>
@@ -419,10 +508,14 @@ function ToolkitView() {
   </div>
 }
 
-function SettingsView({subjects,topics}: {subjects:number;topics:number}) {
+function SettingsView({subjects,topics,remindersEnabled,notificationPermission,onEnableReminders,onDisableReminders}: {
+  subjects:number; topics:number; remindersEnabled:boolean; notificationPermission:NotificationPermission
+  onEnableReminders:()=>void; onDisableReminders:()=>void
+}) {
   return <div className="page-stack"><section className="welcome-row animate-in"><div><div className="eyebrow">YOUR WORKSPACE</div><h1>Settings<span className="period">.</span></h1><p>Know where your data lives and how Mission147 works.</p></div></section>
-    <div className="settings-grid animate-in"><div className="panel settings-panel"><div className="settings-icon"><ShieldCheck size={20}/></div><h3>Deployment-aware storage</h3><p>Local development uses SQLite on your computer. A hosted deployment sends requests to your configured API and stores records in that backend's database.</p><div className="settings-status"><span className="green-dot"/> API connection is checked when dashboard data loads</div></div><div className="panel settings-panel"><div className="settings-icon"><DatabaseIcon/></div><h3>Your learning data</h3><p>Current records in this workspace.</p><div className="settings-data"><span>Subjects<strong>{subjects}</strong></span><span>Topics<strong>{topics}</strong></span></div></div><div className="panel settings-panel"><div className="settings-icon"><AlarmClock size={20}/></div><h3>Reminder capability</h3><p>Revision dates are stored automatically. Browser and background notification delivery is not enabled in this phase.</p><span className="feature-status">Planned feature</span></div><div className="panel settings-panel"><div className="settings-icon"><Sparkles size={20}/></div><h3>1–4–7 method</h3><p>Default intervals are calculated from the original study date. Custom offsets can be set when creating a topic.</p><div className="plan-pills large"><span>1</span><span>4</span><span>7</span><span>14</span><span>30</span></div></div></div>
+    <div className="settings-grid animate-in"><div className="panel settings-panel"><div className="settings-icon"><ShieldCheck size={20}/></div><h3>Deployment-aware storage</h3><p>Local development uses SQLite on your computer. A hosted deployment sends requests to your configured API and stores records in that backend's database.</p><div className="settings-status"><span className="green-dot"/> API requests retry automatically if the service is waking up</div></div><div className="panel settings-panel"><div className="settings-icon"><DatabaseIcon/></div><h3>Your learning data</h3><p>Current records in this workspace.</p><div className="settings-data"><span>Subjects<strong>{subjects}</strong></span><span>Topics<strong>{topics}</strong></span></div></div>
+    <div className="panel settings-panel reminder-settings"><div className="settings-icon"><AlarmClock size={20}/></div><h3>Revision reminders</h3><p>Get a browser notification when revisions are due or overdue. Permission is controlled by your browser.</p><div className="settings-status"><span className={remindersEnabled && notificationPermission === 'granted' ? 'green-dot' : 'amber-dot'}/>{remindersEnabled && notificationPermission === 'granted' ? 'Browser reminders are enabled' : notificationPermission === 'denied' ? 'Notifications blocked in browser settings' : 'Permission needed to send browser notifications'}</div>{remindersEnabled ? <button className="secondary-button" onClick={onDisableReminders}>Pause reminders</button> : <button className="primary-button" onClick={onEnableReminders}>Enable browser reminders</button>}<small>Reminder checks run while this app is open. Background delivery when the browser is closed is not supported yet.</small></div>
+    <div className="panel settings-panel"><div className="settings-icon"><Sparkles size={20}/></div><h3>1–4–7 method</h3><p>Default intervals are calculated from the original study date. Custom offsets can be set when creating a topic.</p><div className="plan-pills large"><span>1</span><span>4</span><span>7</span><span>14</span><span>30</span></div></div></div>
   </div>
 }
-
 function DatabaseIcon() { return <Activity size={20}/> }
