@@ -68,7 +68,7 @@ export default function App() {
       const [s, t, r] = await Promise.all([
         api<Subject[]>('/api/subjects'),
         api<Topic[]>('/api/topics'),
-        api<Revision[]>(`/api/revisions?date=${todayISO()}`),
+        api<Revision[]>('/api/revisions?date=9999-12-31'),
       ])
       setSubjects(s); setTopics(t); setRevisions(r)
       setTopicSubject(current => current || (s[0] ? String(s[0].id) : ''))
