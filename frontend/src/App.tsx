@@ -19,7 +19,7 @@ type Topic = {
   subtopics: { id: number; title: string; completed_at?: string | null }[]
   revisions: Revision[]; revision_offsets: number[]
 }
-type View = 'Overview' | 'My topics' | "Today's revision" | 'Calendar' | 'Settings'
+type View = 'Overview' | 'My topics' | "Today's revision" | 'Calendar' | 'Study toolkit' | 'Settings'
 
 const PET_NAMES = ['Bae', 'Goddess', 'My lady', 'Love', 'Sweetie', 'Darling', 'Angel', 'Princess', 'Queen', 'Wifey', 'Sunshine', 'Honey', 'Beautiful', 'Cutie', 'Beloved', 'My heart', 'Starlight', 'Dream girl']
 
@@ -149,7 +149,7 @@ export default function App() {
   const navItems: { label: View; icon: typeof LayoutDashboard }[] = [
     { label: 'Overview', icon: LayoutDashboard }, { label: 'My topics', icon: BookOpen },
     { label: "Today's revision", icon: ListTodo }, { label: 'Calendar', icon: CalendarDays },
-    { label: 'Settings', icon: Settings2 },
+    { label: 'Study toolkit', icon: CircleHelp }, { label: 'Settings', icon: Settings2 },
   ]
 
   return <div className="app-shell" ref={rootRef}>
@@ -206,6 +206,7 @@ export default function App() {
           {view === 'My topics' && <TopicsView topics={filteredTopics} subjects={subjects} filterSubject={filterSubject} setFilterSubject={setFilterSubject} onAdd={() => setShowTopicForm(true)} />}
           {view === "Today's revision" && <RevisionView revisions={revisions} onComplete={updateRevision} />}
           {view === 'Calendar' && <CalendarView topics={topics} />}
+          {view === 'Study toolkit' && <ToolkitView />}
           {view === 'Settings' && <SettingsView subjects={subjects.length} topics={topics.length} />}
         </>}
       </div>
@@ -328,6 +329,65 @@ function CalendarView({topics}: {topics:Topic[]}) {
   return <div className="page-stack"><section className="welcome-row animate-in"><div><div className="eyebrow">PLAN AHEAD</div><h1>Revision calendar<span className="period">.</span></h1><p>See the learning cycles coming into focus.</p></div><div className="month-controls"><button className="icon-button" onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()-1,1))} aria-label="Previous month">‹</button><strong>{month.toLocaleDateString(undefined,{month:'long',year:'numeric'})}</strong><button className="icon-button" onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()+1,1))} aria-label="Next month">›</button></div></section>
     <div className="calendar-grid animate-in">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=><div className="calendar-weekday" key={d}>{d}</div>)}{Array.from({length:mondayOffset},(_,i)=><div className="calendar-day empty-day" key={'e'+i}/>)}{days.map(day=>{const key=`${month.getFullYear()}-${String(month.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const events=byDay.get(key)||[];return <div key={key} className={`calendar-day ${key===todayISO()?'is-today':''}`}><span className="calendar-day-num">{day}</span>{events.slice(0,3).map(ev=><div key={ev.id} className={`calendar-event ${ev.status==='completed'?'event-done':''}`} title={ev.topic_title}>D{ev.offset_days} · {ev.topic_title}</div>)}{events.length>3&&<span className="more-events">+{events.length-3} more</span>}</div>})}</div>
     <div className="info-banner"><CalendarDays size={18}/><div><strong>Calendar is built from your saved topics.</strong><span>Completed sessions are marked separately. Use the revision queue to complete or reschedule sessions.</span></div></div>
+  </div>
+}
+
+
+const TOOLKIT_STEPS = [
+  { title: 'Day 0 — Learn it', kicker: 'Understand first', body: 'Study one small topic carefully. Make sure you can explain the main idea in your own words before you close your notes.', example: 'Example: learn what photosynthesis is and why plants need sunlight.', day: '0', label: 'LEARN', icon: BookOpen },
+  { title: 'Day 1 — First recall', kicker: 'Retrieve from memory', body: 'The next day, try to recall the idea before opening your notes. Then check what you missed and correct it.', example: 'Example: explain photosynthesis from memory, then check the equation and key steps.', day: '1', label: 'RECALL', icon: Target },
+  { title: 'Day 4 — Strengthen it', kicker: 'Repair weak spots', body: 'Return to the same topic after four days. Use a few questions or a blank-page summary to find gaps in your understanding.', example: 'Example: draw the process and label sunlight, water, carbon dioxide, glucose and oxygen.', day: '4', label: 'PRACTISE', icon: Sparkles },
+  { title: 'Day 7 — Check retention', kicker: 'Make it stick', body: 'After seven days, test yourself again without looking. Mark the topic complete only after you have reviewed mistakes.', example: 'Example: answer three short questions about photosynthesis and explain the process aloud.', day: '7', label: 'RETAIN', icon: CheckCircle2 },
+]
+
+function ToolkitView() {
+  const [understood, setUnderstood] = useState(false)
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [step, setStep] = useState(0)
+  const current = TOOLKIT_STEPS[step]
+  const StepIcon = current.icon
+
+  return <div className="page-stack toolkit-page">
+    <section className="welcome-row animate-in">
+      <div><div className="eyebrow"><Sparkles size={13}/> YOUR FRIENDLY LEARNING GUIDE</div><h1>Study toolkit<span className="period">.</span></h1><p>A visual, step-by-step guide to using the 1–4–7 revision method in Mission147.</p></div>
+    </section>
+    <section className="toolkit-intro panel animate-in">
+      <div className="toolkit-intro-copy"><span className="toolkit-label">THE IDEA IN ONE SENTENCE</span><h2>Learn once. Recall on a schedule. Remember for longer.</h2><p>Studying again and again in one sitting can feel familiar, but spaced revision asks your brain to retrieve the information after a gap. Use these dates as a practical guide—not a guarantee or a rigid rule.</p></div>
+      <div className="toolkit-mini-visual" aria-label="Study on day zero, then revise on days one, four and seven">
+        <div className="mini-visual-line"></div>
+        {TOOLKIT_STEPS.map((s, i) => <div className={`mini-visual-node mini-node-${i}`} key={s.day}><span>{s.day}</span><small>{s.label}</small></div>)}
+      </div>
+    </section>
+    <section className="toolkit-section animate-in">
+      <div className="toolkit-section-head"><div><div className="eyebrow">THE VISUAL WALKTHROUGH</div><h2>Four moments. One simple habit.</h2></div><span className="toolkit-count">0 → 1 → 4 → 7</span></div>
+      <div className="toolkit-step-grid">
+        {TOOLKIT_STEPS.map((s, i) => { const Icon = s.icon; return <article className="toolkit-step-card" key={s.day}>
+          <div className={`toolkit-step-art toolkit-art-${i}`}><div className="art-orbit"></div><div className="art-number">{s.day}</div><Icon size={22} className="art-icon"/><span className="art-caption">{s.label}</span></div>
+          <div className="toolkit-step-content"><span className="toolkit-step-kicker">STEP {i + 1} · DAY {s.day}</span><h3>{s.title.split(' — ')[1]}</h3><p>{s.body}</p><div className="toolkit-example"><strong><Sparkles size={13}/> Worked example</strong><span>{s.example}</span></div></div>
+        </article>})}
+      </div>
+    </section>
+    <section className="toolkit-example-panel panel animate-in">
+      <div className="toolkit-example-heading"><div className="toolkit-example-icon"><BookOpen size={20}/></div><div><span className="toolkit-label">EXAMPLE TOPIC</span><h2>Photosynthesis</h2><p>Imagine you studied this topic on October 22.</p></div></div>
+      <div className="worked-timeline">
+        <div><span className="worked-day">OCT 22</span><b>Day 0</b><span>Learn the concept</span></div><div><span className="worked-day">OCT 23</span><b>Day 1</b><span>Recall without notes</span></div><div><span className="worked-day">OCT 26</span><b>Day 4</b><span>Practise and fix gaps</span></div><div><span className="worked-day">OCT 29</span><b>Day 7</b><span>Test your memory</span></div>
+      </div>
+      <p className="toolkit-footnote">Dates above are an illustration using October 22 as the study date. Your own revision dates are calculated from the date you enter when adding a topic.</p>
+    </section>
+    <section className="toolkit-check panel animate-in">
+      <div className="toolkit-check-mark"><CheckCircle2 size={22}/></div><div className="toolkit-check-copy"><h3>Does the method make sense?</h3><p>Day 0 is the first study session. Then come short recall sessions on days 1, 4 and 7. Each review should make you retrieve the answer—not only reread it.</p></div>
+      <button className={`understood-button ${understood ? 'is-understood' : ''}`} onClick={() => { setUnderstood(true); setTutorialOpen(false); setStep(0) }}><Check size={16}/>{understood ? 'I understand ✓' : 'I understood'}</button>
+    </section>
+    {understood && <section className="toolkit-unlocked animate-in"><div><span className="toolkit-label">READY FOR A GUIDED EXPLANATION?</span><h3>Let’s walk through a real example together.</h3><p>Open the interactive tutorial to move through each day, see what to do, and check the example.</p></div><button className="primary-button" onClick={() => { setStep(0); setTutorialOpen(true) }}><BookOpen size={16}/> Start the tutorial <ArrowRight size={16}/></button></section>}
+    {tutorialOpen && <div className="tutorial-backdrop" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+      <section className="tutorial-modal">
+        <div className="tutorial-topline"><span className="toolkit-label">GUIDED TUTORIAL · STEP {step + 1} OF {TOOLKIT_STEPS.length}</span><button className="icon-button" onClick={() => setTutorialOpen(false)} aria-label="Close tutorial"><X size={18}/></button></div>
+        <div className={`tutorial-hero tutorial-hero-${step}`}><div className="tutorial-day-bubble">DAY {current.day}</div><StepIcon size={32}/><div className="tutorial-progress">{TOOLKIT_STEPS.map((s,i)=><span key={s.day} className={i <= step ? 'progress-active' : ''}/>)}</div></div>
+        <span className="toolkit-step-kicker">{current.kicker}</span><h2 id="tutorial-title">{current.title}</h2><p className="tutorial-body">{current.body}</p>
+        <div className="tutorial-example-box"><strong>Try this now</strong><p>{current.example}</p><span>Tip: say the answer in your own words before checking your notes.</span></div>
+        <div className="tutorial-actions"><button className="secondary-button" disabled={step === 0} onClick={() => setStep(v => Math.max(0, v - 1))}>Previous</button>{step < TOOLKIT_STEPS.length - 1 ? <button className="primary-button" onClick={() => setStep(v => Math.min(TOOLKIT_STEPS.length - 1, v + 1))}>Next step <ArrowRight size={15}/></button> : <button className="primary-button" onClick={() => setTutorialOpen(false)}><Check size={15}/> Finish tutorial</button>}</div>
+      </section>
+    </div>}
   </div>
 }
 
