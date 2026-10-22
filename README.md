@@ -246,3 +246,22 @@ npm run build
 ## Next phase — durable storage
 
 Before using Mission147 as a real daily study tracker, migrate the current SQLite database layer to a persistent PostgreSQL provider (for example, Supabase), add environment-based connection configuration, and test schema creation, topic creation, revision updates, and data retention after redeploy. Keep database credentials in the backend host's environment variables; never put a database password in a `VITE_*` frontend variable.
+
+
+## In-app learning and project walkthrough
+
+The **Study toolkit** screen contains two separate learning experiences:
+
+1. **Complete Mission147 walkthrough** explains the product flow: Overview, creating subjects, adding topics and revision offsets, using Today's revision, reading the Calendar, revisiting the Study toolkit, and understanding Settings/data limitations. Use Previous/Next to move through the steps and Finish walkthrough to close it.
+2. **1–4–7 method guide** teaches the revision technique with visual day markers, a worked example, an “I understood” confirmation, and a separate guided tutorial.
+
+### Recommended first-use flow
+
+1. Open **Study toolkit** and run the Complete Mission147 walkthrough.
+2. Create a subject (for example, Biology).
+3. Select **Add topic** and enter the topic name, subject, initial study date, and revision days (default: `1, 4, 7`).
+4. Review the generated date preview and save the topic.
+5. Open **Today's revision** on the scheduled dates; recall first, check your notes, then mark the session complete or skip it.
+6. Use **Calendar** to see upcoming sessions and **Overview** to check progress.
+
+The walkthrough explains current functionality, not planned features. Push/email notifications, topic editing/archive, and backup/restore are not enabled in this phase. The Render Free + SQLite demo configuration uses temporary storage; do not rely on it for permanent study records until a persistent database is configured.
