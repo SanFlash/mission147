@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import {
   Activity, AlarmClock, ArrowDownRight, ArrowRight, BookOpen, CalendarDays,
   Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, Command,
-  LayoutDashboard, ListTodo, Plus, Search, Settings2, ShieldCheck, Sparkles,
+  LayoutDashboard, ListTodo, MoreHorizontal, Plus, Search, Settings2, ShieldCheck, Sparkles,
   Target, TrendingUp, X, Pencil, Trash2,
 } from 'lucide-react'
 
@@ -101,6 +101,7 @@ export default function App() {
   const [duration, setDuration] = useState('30')
   const [offsetsText, setOffsetsText] = useState('1, 4, 7')
   const [filterSubject, setFilterSubject] = useState('all')
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const [remindersEnabled, setRemindersEnabled] = useState(() => {
     try { return window.localStorage.getItem('mission147-reminders-enabled') === 'true' } catch { return false }
   })
@@ -344,7 +345,7 @@ export default function App() {
         <div><div className="brand-name">mission<span>147</span></div><div className="brand-caption">YOUR LEARNING SYSTEM</div></div>
       </div>
       <div className="workspace-label">WORKSPACE</div>
-      <nav className="nav-list" aria-label="Main navigation">
+      <nav className="nav-list desktop-nav-list" aria-label="Main navigation">
         {navItems.map(item => {
           const Icon = item.icon
           return <button key={item.label} type="button" title={item.label} aria-label={item.label} aria-current={view === item.label ? 'page' : undefined} className={`nav-item ${view === item.label ? 'active' : ''}`} onClick={() => setView(item.label)}>
@@ -353,6 +354,26 @@ export default function App() {
           </button>
         })}
       </nav>
+      <nav className="nav-list mobile-nav-list" aria-label="Mobile navigation">
+        {navItems.slice(0, 4).map(item => {
+          const Icon = item.icon
+          return <button key={item.label} type="button" title={item.label} aria-label={item.label} aria-current={view === item.label ? 'page' : undefined} className={`nav-item ${view === item.label ? 'active' : ''}`} onClick={() => { setView(item.label); setMobileMoreOpen(false) }}>
+            <Icon size={18} /><span>{item.label}</span>
+            {item.label === "Today's revision" && dueToday.length > 0 && <span className="nav-count">{dueToday.length}</span>}
+          </button>
+        })}
+        <button type="button" className={`nav-item mobile-more-trigger ${mobileMoreOpen || navItems.slice(4).some(item => item.label === view) ? 'active' : ''}`} aria-expanded={mobileMoreOpen} aria-label="More navigation options" onClick={() => setMobileMoreOpen(open => !open)}>
+          <MoreHorizontal size={18} /><span>More</span>
+        </button>
+      </nav>
+      {mobileMoreOpen && <div className="mobile-more-menu" role="menu" aria-label="More navigation options">
+        {navItems.slice(4).map(item => {
+          const Icon = item.icon
+          return <button key={item.label} type="button" role="menuitem" className={`mobile-more-item ${view === item.label ? 'active' : ''}`} onClick={() => { setView(item.label); setMobileMoreOpen(false) }}>
+            <Icon size={17} /><span>{item.label}</span>{view === item.label && <Check size={15}/>}
+          </button>
+        })}
+      </div>}
       <div className="sidebar-divider" />
       <div className="workspace-label">YOUR SUBJECTS <button className="tiny-icon" onClick={() => setShowSubjectForm(true)} aria-label="Add subject"><Plus size={15}/></button></div>
       <div className="subject-list">
