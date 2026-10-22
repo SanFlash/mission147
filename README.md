@@ -22,7 +22,7 @@ Vercel hosts the frontend, not the current SQLite API. Deploying the existing Fl
 - Revision status updates and date-safe schedule generation.
 - GitHub Actions checks for backend tests and frontend build.
 
-Notifications, topic editing/archive, backup/restore, flashcards, and advanced analytics are future phases. The current reminder feature stores revision dates; it does not send push/email notifications.
+Browser revision reminders are available from Settings when notification permission is granted. Reminder checks run while Mission147 is open and can notify for due/overdue sessions; they do not run after the browser is fully closed. Native push/email delivery, topic editing/archive, backup/restore, flashcards, and advanced analytics remain future phases. API calls retry transient failures to accommodate Render Free cold starts, and production builds fall back to the known Render API URL if `VITE_API_BASE_URL` is missing.
 
 ## Default revision schedule
 
