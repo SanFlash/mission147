@@ -281,7 +281,7 @@ export default function App() {
 
   function openEditTopic(topic: Topic) {
     setEditingTopic(topic); setTopicTitle(topic.title); setTopicSubject(String(topic.subject_id)); setStudyDate(topic.original_study_date)
-    setSubtopicsText(topic.subtopics.map(s => s.title).join('\\n')); setPriority(topic.priority); setDuration(String(topic.estimated_minutes))
+    setSubtopicsText(topic.subtopics.map(s => s.title).join('\n')); setPriority(topic.priority); setDuration(String(topic.estimated_minutes))
     setOffsetsText(topic.revision_offsets.join(', ')); setError(''); setShowTopicForm(true)
   }
 
@@ -306,7 +306,7 @@ export default function App() {
     try {
       const payload = {
         title: topicTitle.trim(), subject_id: Number(topicSubject), original_study_date: studyDate,
-        subtopics: subtopicsText.split('\\n').map(v => v.trim()).filter(Boolean),
+        subtopics: subtopicsText.split('\n').map(v => v.trim()).filter(Boolean),
         priority, estimated_minutes: Number(duration), revision_offsets: offsets,
       }
       if (editingTopic) {
