@@ -186,3 +186,30 @@ input,select,textarea{max-width:100%;font-size:16px}
 .project-tour-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px}.project-tour-bottom>p{display:grid;gap:4px;margin:0;min-width:0}.project-tour-bottom>p>strong{font-size:10px;color:#e1dcff}.project-tour-bottom>p>span{font-size:9px;line-height:1.6;color:#9195a9;max-width:440px}.project-tour-bottom .primary-button{flex-shrink:0}
 .project-tour-hero{background:radial-gradient(circle at center,#453a72 0,transparent 65%),#211e32}.project-tour-hero-1,.project-tour-hero-4,.project-tour-hero-6{background:radial-gradient(circle at center,#285443 0,transparent 65%),#182722}.project-tour-hero-2,.project-tour-hero-5{background:radial-gradient(circle at center,#58442b 0,transparent 65%),#252019}.project-tour-modal .tutorial-progress{max-width:100%;flex-wrap:wrap;justify-content:center}.project-tour-modal .tutorial-progress span{width:clamp(12px,4vw,24px)}
 @media(max-width:600px){.project-tour-panel{padding:14px}.project-tour-heading{gap:10px}.project-tour-icon{width:38px;height:38px}.project-tour-heading h2{font-size:15px}.project-tour-heading p{font-size:10px}.project-flow{padding:11px 7px;gap:4px}.project-flow>div>span{width:26px;height:26px}.project-flow>div>b{font-size:9px}.project-flow>div>small{font-size:7px}.project-flow>i{font-size:10px}.project-tour-bottom{align-items:stretch;flex-direction:column}.project-tour-bottom .primary-button{width:100%;min-height:42px}}
+
+
+/* Reliability, reminders and depth-enhanced motion */
+.error-alert{gap:10px;align-items:center}
+.error-alert>span{flex:1;min-width:0;overflow-wrap:anywhere}
+.retry-action{border:1px solid #665a9b;background:#29233f;color:#dcd5ff;border-radius:7px;padding:7px 10px;font-size:10px;font-weight:700;white-space:nowrap}
+.retry-action:hover{background:#383054}
+.hero-card{transform-style:preserve-3d;perspective:1000px;will-change:transform}
+.hero-card .hero-copy,.hero-card .hero-visual{transform:translateZ(18px)}
+.stat-card{transform-style:preserve-3d;perspective:900px;transition:transform .24s ease,border-color .24s ease,box-shadow .24s ease;will-change:transform}
+.stat-card:hover{transform:translateY(-4px) rotateX(2deg) rotateY(-1deg);border-color:#51466f;box-shadow:0 16px 38px #0003}
+.topic-card,.toolkit-step-card,.project-tour-panel{transform-style:preserve-3d;perspective:1000px;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
+.topic-card:hover,.toolkit-step-card:hover{transform:translateY(-3px) rotateX(1deg);border-color:#4b4269;box-shadow:0 16px 34px #0002}
+.toolkit-step-art{transform-style:preserve-3d;perspective:700px;overflow:hidden}
+.toolkit-step-art .art-number{transform:translateZ(24px);text-shadow:0 8px 28px #0005}
+.toolkit-step-art .art-icon{transform:translateZ(34px) rotate(-5deg);filter:drop-shadow(0 7px 12px #0005)}
+.toolkit-step-art .art-orbit{transform:translateZ(8px);animation:mission-orbit 12s linear infinite}
+.project-flow>div{transition:transform .25s ease}
+.project-flow>div:hover{transform:translateY(-4px) scale(1.035)}
+.reminder-settings{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.reminder-settings>p{margin:0}
+.reminder-settings small{font-size:9px;line-height:1.7;color:#888da2;max-width:460px}
+.reminder-settings .primary-button,.reminder-settings .secondary-button{min-height:38px}
+.amber-dot{display:inline-block;width:6px;height:6px;flex-shrink:0;border-radius:50%;background:#e9bb72}
+@keyframes mission-orbit{from{transform:translateZ(8px) rotate(0deg)}to{transform:translateZ(8px) rotate(360deg)}}
+@media(hover:none){.stat-card:hover,.topic-card:hover,.toolkit-step-card:hover,.project-flow>div:hover{transform:none;box-shadow:none}}
+@media(prefers-reduced-motion:reduce){.toolkit-step-art .art-orbit{animation:none}.hero-card,.stat-card,.topic-card,.toolkit-step-card,.project-flow>div{transition:none;transform:none}}
