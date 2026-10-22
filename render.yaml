@@ -2,18 +2,12 @@ services:
   - type: web
     name: mission147-api
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn backend.app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4
     healthCheckPath: /api/health
-    disk:
-      name: mission147-data
-      mountPath: /var/data
-      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
-      - key: MISSION147_DB_PATH
-        value: /var/data/mission147.sqlite3
       - key: MISSION147_CORS_ORIGINS
         sync: false
