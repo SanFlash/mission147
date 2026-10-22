@@ -347,7 +347,7 @@ export default function App() {
       <nav className="nav-list" aria-label="Main navigation">
         {navItems.map(item => {
           const Icon = item.icon
-          return <button key={item.label} className={`nav-item ${view === item.label ? 'active' : ''}`} onClick={() => setView(item.label)}>
+          return <button key={item.label} type="button" title={item.label} aria-label={item.label} aria-current={view === item.label ? 'page' : undefined} className={`nav-item ${view === item.label ? 'active' : ''}`} onClick={() => setView(item.label)}>
             <Icon size={18} /><span>{item.label}</span>
             {item.label === "Today's revision" && dueToday.length > 0 && <span className="nav-count">{dueToday.length}</span>}
           </button>
