@@ -536,3 +536,43 @@ body{
 .danger-button:hover { background:rgba(255,92,118,.17); border-color:rgba(255,110,130,.55); transform:translateY(-1px); }
 .danger-button:disabled { opacity:.55; cursor:not-allowed; }
 @media (max-width:520px) { .topic-actions { display:grid; grid-template-columns:1fr 1fr; } .topic-actions button { width:100%; } }
+
+
+/* Click-through topic details */
+.topic-card-clickable { overflow:hidden; }
+.topic-open-button { display:block; width:100%; padding:0; text-align:left; color:inherit; background:transparent; border:0; cursor:pointer; font:inherit; border-radius:12px; }
+.topic-open-button:focus-visible { outline:2px solid var(--accent, #8b83ff); outline-offset:5px; }
+.topic-open-button h3 { transition:color .2s ease; }
+.topic-open-button:hover h3 { color:#b9b2ff; }
+.topic-open-hint { display:flex; align-items:center; gap:7px; margin-top:13px; color:var(--muted, #a9adc2); font-size:11px; font-weight:650; letter-spacing:.02em; }
+.topic-open-hint svg:last-child { margin-left:auto; }
+.topic-detail-backdrop { z-index:100; }
+.topic-detail-modal { width:min(720px, calc(100vw - 28px)); max-height:min(88vh, 900px); overflow-y:auto; }
+.topic-detail-meta { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:18px 0 22px; }
+.topic-detail-meta span { display:flex; flex-direction:column; gap:5px; padding:12px; border:1px solid rgba(155,155,205,.16); border-radius:13px; background:rgba(130,130,190,.06); text-transform:capitalize; }
+.topic-detail-meta strong { color:var(--muted, #a9adc2); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+.topic-detail-section { margin:20px 0; }
+.topic-detail-section h3 { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 12px; font-size:14px; }
+.topic-detail-section h3 span { border-radius:999px; padding:3px 8px; color:var(--muted, #a9adc2); background:rgba(130,130,190,.1); font-size:11px; font-weight:600; }
+.topic-detail-prose { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.7; color:var(--text, #ececf7); }
+.topic-notes { padding:14px; border:1px solid rgba(155,155,205,.16); border-radius:12px; background:rgba(130,130,190,.05); }
+.topic-detail-list { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.topic-detail-list li { display:flex; align-items:flex-start; gap:10px; padding:11px 12px; border-radius:12px; border:1px solid rgba(155,155,205,.13); background:rgba(130,130,190,.045); overflow-wrap:anywhere; }
+.subtopic-check { display:grid; place-items:center; flex:0 0 23px; width:23px; height:23px; border-radius:8px; background:rgba(139,131,255,.14); color:#c1bbff; font-size:11px; }
+.subtopic-check.is-done { background:rgba(75,202,153,.16); color:#65d9ad; }
+.topic-detail-list li > span:nth-child(2) { flex:1; line-height:1.5; }
+.topic-detail-list small { color:#65d9ad; font-size:10px; }
+.topic-detail-empty { margin:0; padding:13px; border-radius:11px; color:var(--muted, #a9adc2); background:rgba(130,130,190,.06); font-size:12px; line-height:1.6; }
+.topic-detail-tags { display:flex; flex-wrap:wrap; gap:7px; }
+.topic-detail-tags span { padding:5px 9px; border:1px solid rgba(139,131,255,.25); border-radius:999px; color:#c1bbff; background:rgba(139,131,255,.1); font-size:11px; }
+.topic-revision-list { display:grid; gap:8px; }
+.topic-revision-row { display:flex; align-items:center; gap:12px; padding:11px 12px; border:1px solid rgba(155,155,205,.14); border-radius:12px; }
+.revision-stage-badge { display:grid; place-items:center; min-width:42px; height:36px; border-radius:10px; background:rgba(139,131,255,.14); color:#c1bbff; font-size:12px; font-weight:750; }
+.topic-revision-copy { display:flex; flex:1; flex-direction:column; gap:4px; min-width:0; }
+.topic-revision-copy strong { font-size:12px; }
+.topic-revision-copy span { color:var(--muted, #a9adc2); font-size:11px; }
+.topic-revision-status { border-radius:999px; padding:4px 8px; font-size:10px; text-transform:capitalize; background:rgba(255,255,255,.06); color:#b8bdd0; }
+.topic-revision-status.status-completed { background:rgba(75,202,153,.13); color:#65d9ad; }
+.topic-revision-status.status-skipped { background:rgba(255,110,130,.13); color:#ff9eac; }
+.topic-revision-status.status-snoozed { background:rgba(231,179,107,.13); color:#e7b36b; }
+@media (max-width:520px) { .topic-detail-meta { grid-template-columns:1fr; } .topic-detail-modal { padding:18px; } .topic-revision-row { gap:8px; } .topic-revision-status { font-size:9px; } }
