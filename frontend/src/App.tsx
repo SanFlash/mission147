@@ -51,7 +51,7 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) {
-        const error = new Error(body.error || `Request failed (${response.status})`)
+        const error = new Error(`Request failed (${response.status}): ${body.error || response.statusText}`)
         if (response.status < 500 && response.status !== 429) throw error
         throw error
       }
