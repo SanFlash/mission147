@@ -1,5 +1,4 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { gsap } from 'gsap'
 import {
   Activity, AlarmClock, ArrowDownRight, ArrowRight, BookOpen, CalendarDays,
   Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, Command,
@@ -173,82 +172,15 @@ export default function App() {
     const timer = window.setInterval(checkForReminders, 60 * 1000)
     return () => window.clearInterval(timer)
   }, [remindersEnabled, notificationPermission, revisions])
+  // Keep startup independent of animation libraries on mobile browsers.
+  // Decorative motion is handled by CSS; the dashboard must remain usable if animation
+  // APIs are unavailable or a browser has partial support.
   useEffect(() => {
     if (!rootRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const ctx = gsap.context(() => {
-      const intro = gsap.timeline({ defaults: { ease: 'power3.out' } })
-      intro.fromTo('.animate-in',
-        { y: 22, opacity: 0, filter: 'blur(5px)', scale: 0.99 },
-        { y: 0, opacity: 1, filter: 'blur(0px)', scale: 1, duration: 0.68, stagger: 0.075, clearProps: 'all' })
-      intro.fromTo('.eyebrow svg, .toolkit-label, .project-tour-icon, .settings-icon',
-        { opacity: 0, scale: 0.55, rotation: -18 },
-        { opacity: 1, scale: 1, rotation: 0, duration: 0.42, stagger: 0.035, clearProps: 'all' }, '-=0.42')
-      intro.fromTo('.hero-card', { transformPerspective: 1000, rotationX: 7, rotationY: -7, z: -28, scale: 0.96 }, {
-        rotationX: 0, rotationY: 0, z: 0, scale: 1, duration: 1.05,
-        ease: 'elastic.out(1, 0.72)', clearProps: 'transform',
-      }, '-=0.3')
-      intro.fromTo('.stat-card', { rotationX: 10, rotationY: -3, z: -20, y: 18, opacity: 0, transformPerspective: 900 }, {
-        rotationX: 0, rotationY: 0, z: 0, y: 0, opacity: 1, duration: 0.72, stagger: 0.085,
-        ease: 'back.out(1.4)', clearProps: 'transform',
-      }, '-=0.65')
-      intro.fromTo('.progress-ring', { rotate: -65, scale: 0.72, opacity: 0.5 }, {
-        rotate: 0, scale: 1, opacity: 1, duration: 1.05, ease: 'elastic.out(1, 0.7)', clearProps: 'transform',
-      }, '-=0.6')
-      intro.fromTo('.orbit-node', { scale: 0, opacity: 0, rotation: -35 }, {
-        scale: 1, opacity: 1, rotation: 0, duration: 0.55, stagger: 0.08, ease: 'back.out(2)', clearProps: 'transform',
-      }, '-=0.72')
-      intro.fromTo('.toolkit-step-art .art-orbit', { rotation: -38, scale: 0.7, opacity: 0.2 }, {
-        rotation: 0, scale: 1, opacity: 1, duration: 0.9, stagger: 0.08, ease: 'power3.out', clearProps: 'opacity',
-      }, '-=0.6')
-      gsap.fromTo('.brand-mark', { scale: 0.72, rotation: -12 }, {
-        scale: 1, rotation: 0, duration: 0.75, ease: 'elastic.out(1, 0.55)', clearProps: 'transform',
-      })
-      gsap.to('.orbit-node', { y: -5, duration: 1.8, stagger: 0.22, repeat: -1, yoyo: true, ease: 'sine.inOut' })
-      gsap.to('.hero-visual', { y: -5, duration: 3.2, repeat: -1, yoyo: true, ease: 'sine.inOut' })
-      gsap.to('.stat-icon', { rotation: 5, scale: 1.06, duration: 1.15, stagger: 0.12, repeat: -1, yoyo: true, ease: 'sine.inOut' })
-      gsap.to('.art-icon', { y: -3, rotation: 4, duration: 1.4, stagger: 0.14, repeat: -1, yoyo: true, ease: 'sine.inOut' })
-      gsap.utils.toArray<HTMLElement>('.primary-button, .secondary-button, .icon-button, .nav-item').forEach(el => {
-        const icon = el.querySelector('svg')
-        if (!icon) return
-        const enter = () => gsap.to(icon, { x: el.classList.contains('primary-button') ? 3 : 0, y: -1, rotation: el.classList.contains('icon-button') ? 8 : 0, scale: 1.08, duration: 0.2, ease: 'power2.out', overwrite: true })
-        const leave = () => gsap.to(icon, { x: 0, y: 0, rotation: 0, scale: 1, duration: 0.28, ease: 'power2.out', overwrite: true })
-        el.addEventListener('pointerenter', enter)
-        el.addEventListener('pointerleave', leave)
-        ctx.add(() => { el.removeEventListener('pointerenter', enter); el.removeEventListener('pointerleave', leave) })
-      })
-    }, rootRef)
-    return () => ctx.revert()
-  }, [view, loading])
-
-  // Pointer-driven depth is only enabled for precise-pointer devices and always resets on exit.
-  useEffect(() => {
-    if (!rootRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-      !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
-    const nodes = Array.from(rootRef.current.querySelectorAll<HTMLElement>(
-      '.hero-card, .stat-card, .topic-card, .toolkit-step-card, .project-tour-panel',
-    ))
-    const handlers = nodes.map(node => {
-      const move = (event: PointerEvent) => {
-        const rect = node.getBoundingClientRect()
-        const x = (event.clientX - rect.left) / rect.width - 0.5
-        const y = (event.clientY - rect.top) / rect.height - 0.5
-        gsap.to(node, {
-          rotationY: x * 5, rotationX: y * -4, transformPerspective: 950,
-          duration: 0.24, ease: 'power2.out', overwrite: true,
-        })
-      }
-      const leave = () => gsap.to(node, {
-        rotationY: 0, rotationX: 0, duration: 0.42, ease: 'elastic.out(1, 0.7)', overwrite: true,
-      })
-      node.addEventListener('pointermove', move)
-      node.addEventListener('pointerleave', leave)
-      return () => {
-        node.removeEventListener('pointermove', move)
-        node.removeEventListener('pointerleave', leave)
-        gsap.killTweensOf(node)
-      }
+    rootRef.current.querySelectorAll<HTMLElement>('.animate-in').forEach((element, index) => {
+      element.style.animationDelay = `${Math.min(index * 60, 360)}ms`
+      element.classList.add('mission-entry-ready')
     })
-    return () => handlers.forEach(cleanup => cleanup())
   }, [view, loading])
 
   const filteredTopics = useMemo(() => topics.filter(t =>
