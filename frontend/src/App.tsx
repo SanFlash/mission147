@@ -4,7 +4,7 @@ import {
   Activity, AlarmClock, ArrowDownRight, ArrowRight, BookOpen, CalendarDays,
   Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, Command,
   LayoutDashboard, ListTodo, Plus, Search, Settings2, ShieldCheck, Sparkles,
-  Target, TrendingUp, X,
+  Target, TrendingUp, X, Pencil, Trash2,
 } from 'lucide-react'
 
 type Subject = { id: number; name: string; color: string; description?: string }
@@ -88,6 +88,7 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [search, setSearch] = useState('')
   const [showTopicForm, setShowTopicForm] = useState(false)
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null)
   const [showSubjectForm, setShowSubjectForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [subjectName, setSubjectName] = useState('')
@@ -274,6 +275,26 @@ export default function App() {
     finally { setSaving(false) }
   }
 
+  function openAddTopic() {
+    setEditingTopic(null); setTopicTitle(''); setSubtopicsText(''); setPriority('medium'); setDuration('30'); setOffsetsText('1, 4, 7'); setStudyDate(todayISO()); setShowTopicForm(true)
+  }
+
+  function openEditTopic(topic: Topic) {
+    setEditingTopic(topic); setTopicTitle(topic.title); setTopicSubject(String(topic.subject_id)); setStudyDate(topic.original_study_date)
+    setSubtopicsText(topic.subtopics.map(s => s.title).join('\\n')); setPriority(topic.priority); setDuration(String(topic.estimated_minutes))
+    setOffsetsText(topic.revision_offsets.join(', ')); setError(''); setShowTopicForm(true)
+  }
+
+  async function deleteTopic(topic: Topic) {
+    if (!window.confirm('Delete “' + topic.title + '” and its subtopics and revision schedule? This cannot be undone.')) return
+    setError(''); setSaving(true)
+    try {
+      await api('/api/topics/' + topic.id, { method: 'DELETE' })
+      setNotice('“' + topic.title + '” was deleted.'); await load()
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not delete topic.') }
+    finally { setSaving(false) }
+  }
+
   async function createTopic(e: FormEvent) {
     e.preventDefault()
     if (!topicTitle.trim() || !topicSubject) { setError('Add a topic title and create/select a subject first.'); return }
@@ -283,15 +304,21 @@ export default function App() {
     }
     setSaving(true); setError('')
     try {
-      await api('/api/topics', { method: 'POST', body: JSON.stringify({
+      const payload = {
         title: topicTitle.trim(), subject_id: Number(topicSubject), original_study_date: studyDate,
-        subtopics: subtopicsText.split('\n').map(v => v.trim()).filter(Boolean),
+        subtopics: subtopicsText.split('\\n').map(v => v.trim()).filter(Boolean),
         priority, estimated_minutes: Number(duration), revision_offsets: offsets,
-      }) })
-      setTopicTitle(''); setSubtopicsText(''); setPriority('medium'); setDuration('30')
-      setShowTopicForm(false); setNotice('Topic saved. Your revision dates are scheduled.')
-      await load()
-    } catch (e) { setError(e instanceof Error ? e.message : 'Could not create topic.') }
+      }
+      if (editingTopic) {
+        await api('/api/topics/' + editingTopic.id, { method: 'PATCH', body: JSON.stringify(payload) })
+        setNotice('Topic updated. Your topic details and revision plan are saved.')
+      } else {
+        await api('/api/topics', { method: 'POST', body: JSON.stringify(payload) })
+        setNotice('Topic saved. Your revision dates are scheduled.')
+      }
+      setTopicTitle(''); setSubtopicsText(''); setPriority('medium'); setDuration('30'); setEditingTopic(null)
+      setShowTopicForm(false); await load()
+    } catch (e) { setError(e instanceof Error ? e.message : (editingTopic ? 'Could not update topic.' : 'Could not create topic.')) }
     finally { setSaving(false) }
   }
 
@@ -346,7 +373,7 @@ export default function App() {
         <div className="top-actions">
           <label className="search-box"><Search size={16}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search topics..." aria-label="Search topics"/><kbd>⌘ K</kbd></label>
           <button className="icon-button" title="Settings" onClick={() => setView('Settings')}><Settings2 size={18}/></button>
-          <button className="primary-button top-add" onClick={() => setShowTopicForm(true)}><Plus size={17}/> Add topic</button>
+          <button className="primary-button top-add" onClick={openAddTopic}><Plus size={17}/> Add topic</button>
         </div>
       </header>
 
@@ -360,7 +387,7 @@ export default function App() {
             totalSubtopics={totalSubtopics} onAdd={() => setShowTopicForm(true)}
             onNavigate={setView} onComplete={updateRevision} />
           }
-          {view === 'My topics' && <TopicsView topics={filteredTopics} subjects={subjects} filterSubject={filterSubject} setFilterSubject={setFilterSubject} onAdd={() => setShowTopicForm(true)} />}
+          {view === 'My topics' && <TopicsView topics={filteredTopics} subjects={subjects} filterSubject={filterSubject} setFilterSubject={setFilterSubject} onAdd={openAddTopic} onEdit={openEditTopic} onDelete={deleteTopic} />}
           {view === "Today's revision" && <RevisionView revisions={revisions} onComplete={updateRevision} />}
           {view === 'Calendar' && <CalendarView topics={topics} />}
           {view === 'Study toolkit' && <ToolkitView />}
@@ -372,7 +399,7 @@ export default function App() {
 
     {showTopicForm && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) setShowTopicForm(false) }}>
       <form className="modal-card" onSubmit={createTopic}>
-        <div className="modal-head"><div><div className="eyebrow">BUILD YOUR MEMORY</div><h2>Add a new topic</h2><p>We’ll create your revision timeline automatically.</p></div><button type="button" className="icon-button" onClick={() => setShowTopicForm(false)} aria-label="Close"><X size={18}/></button></div>
+        <div className="modal-head"><div><div className="eyebrow">BUILD YOUR MEMORY</div><h2>{editingTopic ? 'Edit topic' : 'Add a new topic'}</h2><p>{editingTopic ? 'Update the topic details and revision timeline.' : 'We’ll create your revision timeline automatically.'}</p></div><button type="button" className="icon-button" onClick={() => setShowTopicForm(false)} aria-label="Close"><X size={18}/></button></div>
         <label className="field-label">Topic name<input required maxLength={240} value={topicTitle} onChange={e => setTopicTitle(e.target.value)} placeholder="e.g. Photosynthesis" autoFocus /></label>
         <div className="field-grid"><label className="field-label">Subject<select required value={topicSubject} onChange={e => setTopicSubject(e.target.value)}><option value="">Choose subject</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label><label className="field-label">Initial study date<input type="date" required value={studyDate} onChange={e => setStudyDate(e.target.value)}/></label></div>
         {subjects.length === 0 && <button type="button" className="text-action" onClick={() => setShowSubjectForm(true)}>+ Create your first subject</button>}
@@ -383,7 +410,7 @@ export default function App() {
           const d = new Date(studyDate + 'T12:00:00'); d.setDate(d.getDate() + offset)
           return <div className="preview-step" key={offset}><span className="step-number">{i + 1}</span><div><strong>Day {offset}</strong><span>{d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</span></div></div>
         })}</div></div>
-        <div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setShowTopicForm(false)}>Cancel</button><button className="primary-button" disabled={saving || !subjects.length}><Plus size={16}/>{saving ? 'Saving…' : 'Save topic & schedule'}</button></div>
+        <div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setShowTopicForm(false)}>Cancel</button><button className="primary-button" disabled={saving || !subjects.length}>{editingTopic ? <Check size={16}/> : <Plus size={16}/>}{saving ? 'Saving…' : editingTopic ? 'Save changes' : 'Save topic & schedule'}</button></div>
       </form>
     </div>}
 
@@ -458,10 +485,10 @@ function EmptyState({icon:Icon,title,text,action,onAction}: {icon:typeof BookOpe
   return <div className="empty-state"><div className="empty-icon"><Icon size={21}/></div><strong>{title}</strong><p>{text}</p><button className="secondary-button" onClick={onAction}>{action} <ArrowRight size={14}/></button></div>
 }
 
-function TopicsView({topics,subjects,filterSubject,setFilterSubject,onAdd}: {topics:Topic[];subjects:Subject[];filterSubject:string;setFilterSubject:(s:string)=>void;onAdd:()=>void}) {
+function TopicsView({topics,subjects,filterSubject,setFilterSubject,onAdd,onEdit,onDelete}: {topics:Topic[];subjects:Subject[];filterSubject:string;setFilterSubject:(s:string)=>void;onAdd:()=>void;onEdit:(topic:Topic)=>void;onDelete:(topic:Topic)=>void}) {
   return <div className="page-stack"><section className="welcome-row animate-in"><div><div className="eyebrow">KNOWLEDGE LIBRARY</div><h1>My topics<span className="period">.</span></h1><p>Your learning, organized into clear revision plans.</p></div><button className="primary-button" onClick={onAdd}><Plus size={17}/> Add topic</button></section>
     <div className="filter-row animate-in"><span>{topics.length} topics found</span><label className="filter-select">Subject <select value={filterSubject} onChange={e => setFilterSubject(e.target.value)}><option value="all">All subjects</option>{subjects.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label></div>
-    {topics.length ? <div className="topic-card-grid">{topics.map(t=><article className="topic-card animate-in" key={t.id}><div className="topic-card-top"><span className="topic-icon topic-tone-0"><BookOpen size={17}/></span><span className={`priority priority-${t.priority}`}>{t.priority} priority</span></div><h3>{t.title}</h3><p className="topic-card-subject">{t.subject_name}</p><div className="topic-card-meta"><span><CalendarDays size={14}/> Learned {prettyDate(t.original_study_date)}</span><span><Clock3 size={14}/> {t.estimated_minutes} min</span></div><div className="topic-card-divider"/><span className="mini-label">REVISION MILESTONES</span><div className="plan-pills large">{t.revision_offsets.map(d=><span key={d} className={t.revisions.find(r=>r.offset_days===d)?.status==='completed'?'done':''}>{d}</span>)}</div><div className="topic-card-footer"><span>{t.subtopics.length} subtopics</span><span>{t.revisions.filter(r=>r.status==='completed').length}/{t.revisions.length} complete</span></div></article>)}</div> : <div className="panel"><EmptyState icon={BookOpen} title="No topics match" text="Try a different search or add a new topic to your library." action="Add topic" onAction={onAdd}/></div>}
+    {topics.length ? <div className="topic-card-grid">{topics.map(t=><article className="topic-card animate-in" key={t.id}><div className="topic-card-top"><span className="topic-icon topic-tone-0"><BookOpen size={17}/></span><span className={`priority priority-${t.priority}`}>{t.priority} priority</span></div><h3>{t.title}</h3><p className="topic-card-subject">{t.subject_name}</p><div className="topic-card-meta"><span><CalendarDays size={14}/> Learned {prettyDate(t.original_study_date)}</span><span><Clock3 size={14}/> {t.estimated_minutes} min</span></div><div className="topic-card-divider"/><span className="mini-label">REVISION MILESTONES</span><div className="plan-pills large">{t.revision_offsets.map(d=><span key={d} className={t.revisions.find(r=>r.offset_days===d)?.status==='completed'?'done':''}>{d}</span>)}</div><div className="topic-card-footer"><span>{t.subtopics.length} subtopics</span><span>{t.revisions.filter(r=>r.status==='completed').length}/{t.revisions.length} complete</span></div><div className="topic-actions"><button type="button" className="secondary-button" onClick={()=>onEdit(t)}><Pencil size={14}/> Edit topic</button><button type="button" className="danger-button" onClick={()=>onDelete(t)}><Trash2 size={14}/> Delete</button></div></article>)}</div> : <div className="panel"><EmptyState icon={BookOpen} title="No topics match" text="Try a different search or add a new topic to your library." action="Add topic" onAction={onAdd}/></div>}
   </div>
 }
 
