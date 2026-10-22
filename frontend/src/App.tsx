@@ -27,6 +27,11 @@ const todayISO = () => {
   const d = new Date()
   return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
 }
+const tomorrowISO = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-')
+}
 const prettyDate = (date: string) => new Date(date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 const prettyLongDate = (date: Date) => date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
 
@@ -147,11 +152,12 @@ export default function App() {
       const now = Date.now()
       const lastSent = Number(window.localStorage.getItem('mission147-last-reminder-at') || 0)
       if (now - lastSent < 60 * 60 * 1000) return
-      const pending = revisions.filter(r => (r.status === 'scheduled' || r.status === 'snoozed') && r.scheduled_date <= todayISO())
+      const pending = revisions.filter(r => (r.status === 'scheduled' || r.status === 'snoozed') && r.scheduled_date <= tomorrowISO())
       if (!pending.length) return
       const overdueCount = pending.filter(r => r.scheduled_date < todayISO()).length
-      const todayCount = pending.length - overdueCount
-      const detail = [overdueCount ? `${overdueCount} overdue` : '', todayCount ? `${todayCount} due today` : ''].filter(Boolean).join(' · ')
+      const todayCount = pending.filter(r => r.scheduled_date === todayISO()).length
+      const tomorrowCount = pending.filter(r => r.scheduled_date === tomorrowISO()).length
+      const detail = [overdueCount ? `${overdueCount} overdue` : '', todayCount ? `${todayCount} due today` : '', tomorrowCount ? `${tomorrowCount} coming tomorrow` : ''].filter(Boolean).join(' · ')
       try {
         new Notification('Mission147 revision reminder', {
           body: `${detail}: time for active recall. Open Mission147 to review your queue.`,
@@ -167,17 +173,56 @@ export default function App() {
   useEffect(() => {
     if (!rootRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const ctx = gsap.context(() => {
-      gsap.fromTo('.animate-in', { y: 12, opacity: 0 }, {
-        y: 0, opacity: 1, duration: 0.48, stagger: 0.055, ease: 'power2.out', clearProps: 'all',
+      gsap.fromTo('.animate-in', { y: 16, opacity: 0, filter: 'blur(3px)' }, {
+        y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.58, stagger: 0.065,
+        ease: 'power3.out', clearProps: 'all',
       })
-      gsap.fromTo('.hero-card', { transformPerspective: 900, rotationX: 3, rotationY: -4, z: -18, scale: 0.985 }, {
-        rotationX: 0, rotationY: 0, z: 0, scale: 1, duration: 0.9, ease: 'power3.out', clearProps: 'transform',
+      gsap.fromTo('.hero-card', { transformPerspective: 1000, rotationX: 4, rotationY: -5, z: -22, scale: 0.975 }, {
+        rotationX: 0, rotationY: 0, z: 0, scale: 1, duration: 1.05,
+        ease: 'elastic.out(1, 0.72)', clearProps: 'transform',
       })
-      gsap.fromTo('.stat-card', { rotationX: 5, z: -12, transformPerspective: 800 }, {
-        rotationX: 0, z: 0, duration: 0.65, stagger: 0.07, ease: 'power2.out', clearProps: 'transform',
+      gsap.fromTo('.stat-card', { rotationX: 7, z: -16, y: 12, transformPerspective: 900 }, {
+        rotationX: 0, z: 0, y: 0, duration: 0.78, stagger: 0.09, ease: 'back.out(1.35)', clearProps: 'transform',
+      })
+      gsap.fromTo('.progress-ring', { rotate: -45, scale: 0.88 }, {
+        rotate: 0, scale: 1, duration: 0.95, delay: 0.12, ease: 'power3.out', clearProps: 'transform',
+      })
+      gsap.fromTo('.toolkit-step-art .art-orbit', { rotation: -28, scale: 0.82, opacity: 0.3 }, {
+        rotation: 0, scale: 1, opacity: 1, duration: 0.9, stagger: 0.08, ease: 'power3.out', clearProps: 'opacity',
       })
     }, rootRef)
     return () => ctx.revert()
+  }, [view, loading])
+
+  // Pointer-driven depth is only enabled for precise-pointer devices and always resets on exit.
+  useEffect(() => {
+    if (!rootRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+    const nodes = Array.from(rootRef.current.querySelectorAll<HTMLElement>(
+      '.hero-card, .stat-card, .topic-card, .toolkit-step-card, .project-tour-panel',
+    ))
+    const handlers = nodes.map(node => {
+      const move = (event: PointerEvent) => {
+        const rect = node.getBoundingClientRect()
+        const x = (event.clientX - rect.left) / rect.width - 0.5
+        const y = (event.clientY - rect.top) / rect.height - 0.5
+        gsap.to(node, {
+          rotationY: x * 5, rotationX: y * -4, transformPerspective: 950,
+          duration: 0.24, ease: 'power2.out', overwrite: true,
+        })
+      }
+      const leave = () => gsap.to(node, {
+        rotationY: 0, rotationX: 0, duration: 0.42, ease: 'elastic.out(1, 0.7)', overwrite: true,
+      })
+      node.addEventListener('pointermove', move)
+      node.addEventListener('pointerleave', leave)
+      return () => {
+        node.removeEventListener('pointermove', move)
+        node.removeEventListener('pointerleave', leave)
+        gsap.killTweensOf(node)
+      }
+    })
+    return () => handlers.forEach(cleanup => cleanup())
   }, [view, loading])
 
   const filteredTopics = useMemo(() => topics.filter(t =>
@@ -514,7 +559,7 @@ function SettingsView({subjects,topics,remindersEnabled,notificationPermission,o
 }) {
   return <div className="page-stack"><section className="welcome-row animate-in"><div><div className="eyebrow">YOUR WORKSPACE</div><h1>Settings<span className="period">.</span></h1><p>Know where your data lives and how Mission147 works.</p></div></section>
     <div className="settings-grid animate-in"><div className="panel settings-panel"><div className="settings-icon"><ShieldCheck size={20}/></div><h3>Deployment-aware storage</h3><p>Local development uses SQLite on your computer. A hosted deployment sends requests to your configured API and stores records in that backend's database.</p><div className="settings-status"><span className="green-dot"/> API requests retry automatically if the service is waking up</div></div><div className="panel settings-panel"><div className="settings-icon"><DatabaseIcon/></div><h3>Your learning data</h3><p>Current records in this workspace.</p><div className="settings-data"><span>Subjects<strong>{subjects}</strong></span><span>Topics<strong>{topics}</strong></span></div></div>
-    <div className="panel settings-panel reminder-settings"><div className="settings-icon"><AlarmClock size={20}/></div><h3>Revision reminders</h3><p>Get a browser notification when revisions are due or overdue. Permission is controlled by your browser.</p><div className="settings-status"><span className={remindersEnabled && notificationPermission === 'granted' ? 'green-dot' : 'amber-dot'}/>{remindersEnabled && notificationPermission === 'granted' ? 'Browser reminders are enabled' : notificationPermission === 'denied' ? 'Notifications blocked in browser settings' : 'Permission needed to send browser notifications'}</div>{remindersEnabled ? <button className="secondary-button" onClick={onDisableReminders}>Pause reminders</button> : <button className="primary-button" onClick={onEnableReminders}>Enable browser reminders</button>}<small>Reminder checks run while this app is open. Background delivery when the browser is closed is not supported yet.</small></div>
+    <div className="panel settings-panel reminder-settings"><div className="settings-icon"><AlarmClock size={20}/></div><h3>Revision reminders</h3><p>Get a browser notification when revisions are due or overdue. Permission is controlled by your browser.</p><div className="settings-status"><span className={remindersEnabled && notificationPermission === 'granted' ? 'green-dot' : 'amber-dot'}/>{remindersEnabled && notificationPermission === 'granted' ? 'Browser reminders are enabled' : notificationPermission === 'denied' ? 'Notifications blocked in browser settings' : 'Permission needed to send browser notifications'}</div>{remindersEnabled ? <button className="secondary-button" onClick={onDisableReminders}>Pause reminders</button> : <button className="primary-button" onClick={onEnableReminders}>Enable browser reminders</button>}<small>Checks for overdue sessions, sessions due today and sessions scheduled for tomorrow while this app is open. Browser-closed delivery is not supported yet.</small></div>
     <div className="panel settings-panel"><div className="settings-icon"><Sparkles size={20}/></div><h3>1–4–7 method</h3><p>Default intervals are calculated from the original study date. Custom offsets can be set when creating a topic.</p><div className="plan-pills large"><span>1</span><span>4</span><span>7</span><span>14</span><span>30</span></div></div></div>
   </div>
 }
