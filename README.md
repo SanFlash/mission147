@@ -81,6 +81,27 @@ List due and overdue revisions as of a date (defaults to today's local server da
 curl "http://127.0.0.1:5000/api/revisions?date=2026-10-26"
 ```
 
+## Run the frontend
+
+Open a second terminal from the repository root while the Flask API is running:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://127.0.0.1:5173. Vite proxies `/api` requests to the Flask API at `127.0.0.1:5000`. The dashboard, topic form, subject form, topic library, revision queue, calendar, and workspace settings are included in this frontend phase.
+
+For a production frontend bundle:
+
+```bash
+cd frontend
+npm run build
+```
+
+The production bundle is generated in `frontend/dist`. Production hosting/serving integration has not yet been configured.
+
 ## Run tests
 
 ```bash
