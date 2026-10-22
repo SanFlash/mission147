@@ -346,6 +346,7 @@ function ToolkitView() {
   const [step, setStep] = useState(0)
   const current = TOOLKIT_STEPS[step]
   const StepIcon = current.icon
+  const demoDateLabel = (offset: number) => { const date = new Date(); date.setHours(12, 0, 0, 0); date.setDate(date.getDate() + offset); return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase() }
 
   return <div className="page-stack toolkit-page">
     <section className="welcome-row animate-in">
@@ -368,11 +369,11 @@ function ToolkitView() {
       </div>
     </section>
     <section className="toolkit-example-panel panel animate-in">
-      <div className="toolkit-example-heading"><div className="toolkit-example-icon"><BookOpen size={20}/></div><div><span className="toolkit-label">EXAMPLE TOPIC</span><h2>Photosynthesis</h2><p>Imagine you studied this topic on October 22.</p></div></div>
+      <div className="toolkit-example-heading"><div className="toolkit-example-icon"><BookOpen size={20}/></div><div><span className="toolkit-label">EXAMPLE TOPIC</span><h2>Photosynthesis</h2><p>Imagine you studied this topic today.</p></div></div>
       <div className="worked-timeline">
-        <div><span className="worked-day">OCT 22</span><b>Day 0</b><span>Learn the concept</span></div><div><span className="worked-day">OCT 23</span><b>Day 1</b><span>Recall without notes</span></div><div><span className="worked-day">OCT 26</span><b>Day 4</b><span>Practise and fix gaps</span></div><div><span className="worked-day">OCT 29</span><b>Day 7</b><span>Test your memory</span></div>
+        <div><span className="worked-day">{demoDateLabel(0)}</span><b>Day 0</b><span>Learn the concept</span></div><div><span className="worked-day">{demoDateLabel(1)}</span><b>Day 1</b><span>Recall without notes</span></div><div><span className="worked-day">{demoDateLabel(4)}</span><b>Day 4</b><span>Practise and fix gaps</span></div><div><span className="worked-day">{demoDateLabel(7)}</span><b>Day 7</b><span>Test your memory</span></div>
       </div>
-      <p className="toolkit-footnote">Dates above are an illustration using October 22 as the study date. Your own revision dates are calculated from the date you enter when adding a topic.</p>
+      <p className="toolkit-footnote">Dates above are an illustration starting today. Your own revision dates are calculated from the date you enter when adding a topic.</p>
     </section>
     <section className="toolkit-check panel animate-in">
       <div className="toolkit-check-mark"><CheckCircle2 size={22}/></div><div className="toolkit-check-copy"><h3>Does the method make sense?</h3><p>Day 0 is the first study session. Then come short recall sessions on days 1, 4 and 7. Each review should make you retrieve the answer—not only reread it.</p></div>
