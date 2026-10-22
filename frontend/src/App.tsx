@@ -27,7 +27,6 @@ const todayISO = () => {
 }
 const prettyDate = (date: string) => new Date(date + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 const prettyLongDate = (date: Date) => date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
-const initials = (name: string) => name.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase()
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, {
