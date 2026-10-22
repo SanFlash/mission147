@@ -2,7 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 're
 import { gsap } from 'gsap'
 import {
   Activity, AlarmClock, ArrowDownRight, ArrowRight, BookOpen, CalendarDays,
-  Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, Command, Flame,
+  Check, CheckCircle2, ChevronDown, CircleHelp, Clock3, Command,
   LayoutDashboard, ListTodo, Plus, Search, Settings2, ShieldCheck, Sparkles,
   Target, TrendingUp, X,
 } from 'lucide-react'
@@ -243,7 +243,6 @@ function Overview(props: {
 }) {
   const { dueToday, overdue, topics, activeCycle, completed, totalSessions, completionRate, totalSubtopics, onAdd, onNavigate, onComplete } = props
   const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'
-  const allRevisions = topics.flatMap(t => t.revisions)
   return <div className="page-stack">
     <section className="welcome-row animate-in"><div><div className="eyebrow"><Sparkles size={13}/> YOUR DAILY MOMENTUM</div><h1>{greeting}, learner<span className="period">.</span></h1><p>{prettyLongDate(new Date())} <span className="subtle-separator">·</span> Small sessions. Stronger recall.</p></div><button className="primary-button" onClick={onAdd}><Plus size={17}/> Add a topic</button></section>
     <section className="hero-card animate-in"><div className="hero-copy"><div className="hero-tag"><span className="pulse-dot"/> YOUR 1–4–7 METHOD</div><h2>Learn it today.<br/><span>Remember it longer.</span></h2><p>Turn learning into a habit with a revision plan that knows what’s next.</p><button className="hero-button" onClick={() => onNavigate("Today's revision")}>Open revision queue <ArrowRight size={16}/></button></div><div className="hero-graphic" aria-label="Day 0, Day 1, Day 4, Day 7 revision cycle"><div className="orbit orbit-one"/><div className="orbit orbit-two"/><div className="orbit-center"><Target size={29}/><span>RECALL</span></div><div className="orbit-node node-zero"><span>0</span><small>LEARN</small></div><div className="orbit-node node-one"><span>1</span><small>REVIEW</small></div><div className="orbit-node node-four"><span>4</span><small>REVIEW</small></div><div className="orbit-node node-seven"><span>7</span><small>REVIEW</small></div></div><div className="hero-glow"/></section>
