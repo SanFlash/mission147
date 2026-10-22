@@ -213,3 +213,88 @@ input,select,textarea{max-width:100%;font-size:16px}
 @keyframes mission-orbit{from{transform:translateZ(8px) rotate(0deg)}to{transform:translateZ(8px) rotate(360deg)}}
 @media(hover:none){.stat-card:hover,.topic-card:hover,.toolkit-step-card:hover,.project-flow>div:hover{transform:none;box-shadow:none}}
 @media(prefers-reduced-motion:reduce){.toolkit-step-art .art-orbit{animation:none}.hero-card,.stat-card,.topic-card,.toolkit-step-card,.project-flow>div{transition:none;transform:none}}
+
+
+/* Study-friendly colour system: calm indigo, readable lavender, progress teal, reminder amber */
+:root{
+  --bg:#0d1220;--panel:#141b2b;--panel2:#1a2437;--line:#2a3850;
+  --muted:#a0aec2;--text:#f2f5ff;--purple:#b8b5ff;--purple2:#9188ff;
+  --green:#65dfc0;--amber:#f4c879;--study-blue:#86caff;
+}
+body{background:radial-gradient(ellipse at 75% -20%,#242a4b55,transparent 48%),var(--bg);color:var(--text)}
+.sidebar{background:#111827;border-color:#28344a}
+.brand-mark{background:linear-gradient(140deg,#b4b1ff,#7771ed);box-shadow:0 8px 24px #7771ed35}
+.brand-name span,.eyebrow,.period,.toolkit-label{color:#bcb8ff}
+.nav-item.active{color:#e0deff;background:linear-gradient(100deg,#34345b,#252b43);box-shadow:inset 2px 0 #b4b1ff}
+.nav-item:hover,.subject-item:hover{background:#202b40}
+.main-panel{background:transparent}
+.topbar{background:#0d1220eF;border-color:#26334a}
+.search-box,.icon-button,.field-label input,.field-label select,.field-label textarea{background:#111a2a;border-color:#33435c;color:#f2f5ff}
+.primary-button{background:linear-gradient(125deg,#c0bbff,#938aff);border-color:#c0bbff;color:#17172d;box-shadow:0 7px 22px #8d85ff26}
+.primary-button:hover{background:linear-gradient(125deg,#d5d2ff,#a9a1ff)}
+.secondary-button{background:#202c42;border-color:#394a66;color:#e2e9ff}
+.panel,.stat-card,.topic-card,.toolkit-step-card{background:linear-gradient(145deg,#172033,#131a29);border-color:#2b3a52}
+.hero-card{background:radial-gradient(ellipse at 85% 15%,#4a4b8250,transparent 43%),linear-gradient(115deg,#252544,#19243a 75%,#15202e);border-color:#45466b;box-shadow:inset 0 1px #ffffff08}
+.hero-tag{background:#343858;border-color:#555888;color:#e0ddff}
+.hero-copy h2 span{color:#bdb8ff}
+.orbit{border-color:#9a9be65c}
+.orbit-center{background:radial-gradient(circle,#4b5284,#242a49);border-color:#8c96dc;box-shadow:0 0 38px #858cfb30}
+.orbit-node{background:#252c49;border-color:#737fc0;box-shadow:0 0 0 5px #252c4940}
+.stat-icon.violet,.empty-icon,.toolkit-example-icon{color:#c4c0ff;background:#302f52}
+.stat-icon.green,.toolkit-check-mark{color:#8af0cf;background:#1c3c3b}
+.stat-icon.amber{color:#ffd78b;background:#433522}
+.stat-icon.blue{color:#9bd7ff;background:#20394d}
+.progress-ring{filter:drop-shadow(0 0 14px #a6a0ff18)}
+.progress-ring-inner{background:#141b2b}
+.revision-time i{background:#f4c879;box-shadow:0 0 0 4px #f4c87920}
+.complete-button{background:#183b37;border-color:#2b6256;color:#82edc8}
+.complete-button:hover{background:#215348}
+.topic-tone-0{color:#c7c2ff;background:#302f52}
+.topic-tone-1{color:#83ebc8;background:#1e403a}
+.topic-tone-2{color:#ffd58b;background:#403420}
+.topic-tone-3{color:#96d7ff;background:#20394d}
+.plan-pills span{color:#d0ccff;background:#282844;border-color:#44456d}
+.plan-pills span.done,.status-done{color:#9af0d0;background:#1b3c34;border-color:#2d6552}
+.status-active{background:#303052;color:#d0cbff}
+.priority-high{background:#482b39;color:#ffb5c0}
+.priority-medium{background:#45371f;color:#ffda8e}
+.priority-low{background:#1d4035;color:#93edc6}
+.revision-stage{background:#2b2e50;color:#d4d0ff}
+.overdue-tag{background:#493522;color:#ffce82!important}
+.success-alert{background:#18382f;border-color:#2c6653;color:#a5f1d4}
+.error-alert{background:#3d2530;border-color:#794552;color:#ffc0ca}
+.bottom-note{background:#132b2c;border-color:#28504d}
+.note-icon,.bottom-note strong{color:#a3f0d8}
+.note-secure{color:#8fe8ca!important}
+.toolkit-intro{background:radial-gradient(ellipse at 90% 30%,#45487b 0,transparent 55%),linear-gradient(145deg,#172033,#131a29)}
+.toolkit-mini-visual .mini-node-0 span{background:#302f52;border-color:#7772c7;color:#d2ceff}
+.mini-visual-line{background:linear-gradient(90deg,#a49cff,#6be1bd,#f3c879)}
+.toolkit-art-0{background:radial-gradient(circle at 50% 45%,#45447e 0,transparent 58%),#1a2034}
+.toolkit-art-1,.toolkit-art-3{background:radial-gradient(circle at 50% 45%,#215b50 0,transparent 58%),#142a2c}
+.toolkit-art-2{background:radial-gradient(circle at 50% 45%,#65502d 0,transparent 58%),#29241d}
+.tutorial-hero{background:radial-gradient(circle at center,#45447e 0,transparent 65%),#1c2035}
+.tutorial-hero-1,.tutorial-hero-3{background:radial-gradient(circle at center,#215b50 0,transparent 65%),#142a2c}
+.tutorial-hero-2{background:radial-gradient(circle at center,#65502d 0,transparent 65%),#29241d}
+.project-tour-panel{background:radial-gradient(ellipse at 90% 0%,#424273 0,transparent 52%),linear-gradient(145deg,#172033,#131a29);border-color:#41436b}
+.project-flow{background:#111827;border-color:#2d3a53}
+.project-flow>div>span{background:#303052;color:#d5d0ff}
+.project-tour-hero{background:radial-gradient(circle at center,#45447e 0,transparent 65%),#1c2035}
+.project-tour-hero-1,.project-tour-hero-4,.project-tour-hero-6{background:radial-gradient(circle at center,#215b50 0,transparent 65%),#142a2c}
+.project-tour-hero-2,.project-tour-hero-5{background:radial-gradient(circle at center,#65502d 0,transparent 65%),#29241d}
+.tutorial-modal,.modal-card{background:#151d2d;border-color:#35425d}
+.tutorial-example-box,.toolkit-example,.schedule-preview{background:#101827;border-color:#2d3b53}
+.tutorial-example-box strong,.toolkit-example strong{color:#d8d4ff}
+.field-label input:focus,.field-label select:focus,.field-label textarea:focus{border-color:#a7a2ff;box-shadow:0 0 0 3px #a7a2ff20}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline-color:#bcb8ff}
+.alert{box-shadow:0 8px 26px #0002}
+.hero-card,.stat-card,.topic-card,.toolkit-step-card,.project-tour-panel{transform-style:preserve-3d;backface-visibility:hidden}
+.hero-card .hero-copy,.hero-card .hero-visual{transform:translateZ(16px)}
+.stat-card,.topic-card,.toolkit-step-card{will-change:transform}
+@media(max-width:600px){
+  .sidebar{background:rgba(17,24,39,.97);border-top-color:#2d3b53}
+  .nav-item.active{background:#2d2d50;box-shadow:inset 0 -2px #b4b1ff}
+  .hero-card .hero-copy{transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .stat-card,.topic-card,.toolkit-step-card,.hero-card,.project-tour-panel{will-change:auto;transform:none!important}
+}
