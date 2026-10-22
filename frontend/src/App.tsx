@@ -46,9 +46,11 @@ const wait = (ms: number) => new Promise(resolve => window.setTimeout(resolve, m
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   let lastError: unknown
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  // Keep mobile startup responsive when the free hosted API is cold or unreachable.
+  // One bounded retry is enough; repeated 25s waits made the entire dashboard feel frozen.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
     const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 25000)
+    const timeout = window.setTimeout(() => controller.abort(), 9000)
     try {
       const response = await fetch(`${API_BASE_URL}${path}`, {
         ...options, signal: controller.signal, cache: 'no-store',
@@ -66,13 +68,13 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
       const retryable = error instanceof TypeError ||
         (error instanceof DOMException && error.name === 'AbortError') ||
         (error instanceof Error && /Request failed \((5\d\d|429)\)/.test(error.message))
-      if (!retryable || attempt === 2) break
+      if (!retryable || attempt === 1) break
       // Render Free can sleep between requests; allow time for the API to wake up.
-      await wait(900 * (attempt + 1))
+      await wait(500)
     } finally { window.clearTimeout(timeout) }
   }
   if (lastError instanceof DOMException && lastError.name === 'AbortError')
-    throw new Error('The study API is taking too long to wake up. Please retry in a moment.')
+    throw new Error('The study service is taking longer than expected to start. Your dashboard is still available to retry—tap Retry now in a moment.')
   if (lastError instanceof TypeError)
     throw new Error('Cannot reach the study API right now. Check your connection and retry; the hosted service may be waking up.')
   throw lastError instanceof Error ? lastError : new Error('Could not reach Mission147. Please retry.')
