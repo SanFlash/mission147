@@ -15,6 +15,7 @@ type Revision = {
 }
 type Topic = {
   id: number; title: string; subject_id: number; subject_name: string; original_study_date: string
+  description?: string; notes?: string
   priority: string; difficulty: number; estimated_minutes: number; tags: string[]
   subtopics: { id: number; title: string; completed_at?: string | null }[]
   revisions: Revision[]; revision_offsets: number[]
