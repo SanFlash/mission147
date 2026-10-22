@@ -14,6 +14,12 @@ You can publish the frontend for free on Vercel and run the Flask API on Render'
 
 Vercel hosts the frontend, not the current SQLite API. Deploying the existing Flask + SQLite backend as a Vercel Function would not make the SQLite file persistent.
 
+## Data safety for UI updates
+
+The GSAP animation, theme, and browser-reminder updates are frontend-only. They do not run database resets, seed replacement records, delete subjects/topics, or change the SQLite schema. The API's existing schema initialization uses `CREATE TABLE IF NOT EXISTS`; the current update does not modify the backend database code or migration version. Browser reminder preferences are stored separately in the browser's local storage and do not alter study records.
+
+**Important:** this does not make the existing Render Free SQLite storage durable. Render Free has an ephemeral filesystem, so records may still be lost after a restart, spin-down, or redeploy. Before entering important personal study data, configure a persistent managed database and verify a backup/restore process. The frontend changes themselves do not intentionally modify existing records, but deployment storage limits still apply.
+
 ## Current implementation
 
 - Responsive React dashboard with overview, topics, revision queue, calendar, and settings views.
