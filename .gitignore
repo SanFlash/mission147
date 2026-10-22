@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+instance/*.sqlite*
+instance/*.db
+
+# Node
+node_modules/
+dist/
+coverage/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# User data and exports
+backups/
+exports/
+*.sqlite-wal
+*.sqlite-shm
